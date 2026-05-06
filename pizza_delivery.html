@@ -326,8 +326,8 @@ function renderStops() {
         <div class="stop-time">${s.time}</div>
       </div>
       <div class="stop-actions">
-        ${!s.delivered?`<button class="icon-btn ok-btn" onclick="askDeliver(${i})">${CHECK_SVG}</button>`:''}
-        <button class="icon-btn" onclick="removeStop(${i})">${CLOSE_SVG}</button>
+        ${!s.delivered?`<button class="icon-btn ok-btn" onclick="askDeliver('${s.id}')">${CHECK_SVG}</button>`:''}
+        <button class="icon-btn" onclick="removeStop('${s.id}')">${CLOSE_SVG}</button>
       </div>`;
 
     // Drag events — desktop
@@ -418,7 +418,8 @@ function onTouchEnd(e) {
 }
 
 // Confirm dialog
-function askDeliver(i) {
+function askDeliver(id) {
+  const i = stops.findIndex(s => String(s.id) === String(id));
   pendingDeliverIdx = i;
   document.getElementById('dialogAddr').textContent = stops[i].address;
   document.getElementById('confirmOverlay').classList.add('show');
@@ -428,9 +429,9 @@ function closeDialog() {
   document.getElementById('confirmOverlay').classList.remove('show');
 }
 function confirmDeliver() {
-  closeDialog();
   if (pendingDeliverIdx === null) return;
   const i = pendingDeliverIdx;
+  closeDialog();
   stops[i].delivered = true;
   stops[i].deliveredAt = new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
   saveStops(); saveToHistory(stops[i]); renderStops();
@@ -441,7 +442,7 @@ document.getElementById('confirmOverlay').addEventListener('click', e => {
   if (e.target === document.getElementById('confirmOverlay')) closeDialog();
 });
 
-function removeStop(i) { stops.splice(i,1); saveStops(); renderStops(); }
+function removeStop(id) { const i = stops.findIndex(s => String(s.id) === String(id)); if(i===-1) return; stops.splice(i,1); saveStops(); renderStops(); }
 
 function planRoute() {
   const active = stops.filter(s => !s.delivered);
