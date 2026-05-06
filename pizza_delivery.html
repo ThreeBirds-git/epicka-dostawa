@@ -450,15 +450,40 @@ function removeStop(id) { const i = stops.findIndex(s => String(s.id) === String
 function planRoute() {
   const active = stops.filter(s => !s.delivered);
   if (!active.length) { showToast('Brak aktywnych przystanków!'); return; }
-  const origin = encodeURIComponent(PIZZERIA);
-  let url;
+
   if (active.length === 1) {
-    url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${encodeURIComponent(active[0].address)}&travelmode=driving`;
-  } else {
-    const waypts = active.map(s=>encodeURIComponent(s.address)).join('%7C');
-    url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${origin}&waypoints=${waypts}&travelmode=driving&optimize=true`;
+    window.location.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(PIZZERIA)}&destination=${encodeURIComponent(active[0].address)}&travelmode=driving`;
+    return;
   }
-  window.location.href = url;
+
+  showToast('⏳ Obliczam optymalną trasę...');
+
+  const directionsService = new google.maps.DirectionsService();
+  const waypoints = active.map(s => ({ location: s.address, stopover: true }));
+
+  directionsService.route({
+    origin: PIZZERIA,
+    destination: active[active.length - 1].address,
+    waypoints: waypoints.slice(0, -1),
+    optimizeWaypoints: true,
+    travelMode: google.maps.TravelMode.DRIVING
+  }, (result, status) => {
+    if (status === 'OK' && result.routes[0]) {
+      const order = result.routes[0].waypoint_order;
+      const allStops = [active[active.length - 1], ...order.map(i => active[i])];
+      const sorted = [...order.map(i => active[i]), active[active.length - 1]];
+
+      const origin = encodeURIComponent(PIZZERIA);
+      const dest = encodeURIComponent(sorted[sorted.length - 1].address);
+      const waypts = sorted.slice(0, -1).map(s => encodeURIComponent(s.address)).join('%7C');
+      window.location.href = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypts}&travelmode=driving`;
+    } else {
+      // Fallback
+      const origin = encodeURIComponent(PIZZERIA);
+      const waypts = active.map(s => encodeURIComponent(s.address)).join('%7C');
+      window.location.href = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${origin}&waypoints=${waypts}&travelmode=driving&optimize=true`;
+    }
+  });
 }
 
 function saveToHistory(stop) {
