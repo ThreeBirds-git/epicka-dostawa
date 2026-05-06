@@ -455,9 +455,8 @@ function planRoute() {
   if (active.length === 1) {
     url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${encodeURIComponent(active[0].address)}&travelmode=driving`;
   } else {
-    const dest = encodeURIComponent(active[active.length-1].address);
-    const waypts = active.slice(0,-1).map(s=>encodeURIComponent(s.address)).join('%7C');
-    url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypts}&travelmode=driving&optimize=true`;
+    const waypts = active.map(s=>encodeURIComponent(s.address)).join('%7C');
+    url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${origin}&waypoints=${waypts}&travelmode=driving&optimize=true`;
   }
   window.location.href = url;
 }
