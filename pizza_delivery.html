@@ -447,12 +447,27 @@ document.getElementById('confirmOverlay').addEventListener('click', e => {
 
 function removeStop(id) { const i = stops.findIndex(s => String(s.id) === String(id)); if(i===-1) return; stops.splice(i,1); saveStops(); renderStops(); }
 
+function openMaps(webUrl) {
+  // Try native Google Maps app first via universal link
+  // On iPhone this opens the app directly if installed
+  const nativeUrl = webUrl.replace('https://www.google.com/maps', 'comgooglemaps://');
+  
+  // Try app URL, fallback to web after 500ms if app not installed
+  const appWindow = window.open(nativeUrl, '_blank');
+  setTimeout(() => {
+    try {
+      if (!appWindow || appWindow.closed) window.open(webUrl, '_blank');
+    } catch(e) { window.open(webUrl, '_blank'); }
+  }, 500);
+}
+
 function planRoute() {
   const active = stops.filter(s => !s.delivered);
   if (!active.length) { showToast('Brak aktywnych przystanków!'); return; }
 
   if (active.length === 1) {
-    window.location.href = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(PIZZERIA)}&destination=${encodeURIComponent(active[0].address)}&travelmode=driving`;
+    const singleUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(PIZZERIA)}&destination=${encodeURIComponent(active[0].address)}&travelmode=driving`;
+    openMaps(singleUrl);
     return;
   }
 
@@ -476,12 +491,12 @@ function planRoute() {
       const origin = encodeURIComponent(PIZZERIA);
       const dest = encodeURIComponent(sorted[sorted.length - 1].address);
       const waypts = sorted.slice(0, -1).map(s => encodeURIComponent(s.address)).join('%7C');
-      window.location.href = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypts}&travelmode=driving`;
+      openMaps(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypts}&travelmode=driving`);
     } else {
       // Fallback
       const origin = encodeURIComponent(PIZZERIA);
       const waypts = active.map(s => encodeURIComponent(s.address)).join('%7C');
-      window.location.href = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${origin}&waypoints=${waypts}&travelmode=driving&optimize=true`;
+      openMaps(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${origin}&waypoints=${waypts}&travelmode=driving&optimize=true`);
     }
   });
 }
