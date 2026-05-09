@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Epicka Dostawa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #222222;
+      --border: #2e2e2e;
+      --accent: #ff6b00;
+      --accent2: #ffaa00;
+      --text: #f0f0f0;
+      --text-muted: #888;
+      --green: #22c55e;
+      --blue: #3b82f6;
+      --red: #ef4444;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ─── AUTH SCREEN ─── */
+    #auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at 30% 50%, #1a0a00 0%, #0f0f0f 60%);
+    }
+
+    .auth-card {
+      width: 360px;
+      padding: 48px 40px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    .auth-logo {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .auth-title {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .auth-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+    }
+
+    .btn-google {
+      width: 100%;
+      padding: 14px;
+      background: #fff;
+      color: #333;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn-google:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(255,107,0,0.3);
+    }
+
+    .btn-google svg { width: 20px; height: 20px; }
+
+    /* ─── MAIN APP ─── */
+    #app { display: none; min-height: 100vh; }
+
+    /* ─── HEADER ─── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15,15,15,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-logo {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      object-fit: cover;
+    }
+
+    .btn-signout {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-signout:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ─── TABS ─── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      background: var(--bg);
+    }
+
+    .tab {
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    /* ─── MAIN CONTENT ─── */
+    .main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* ─── ADD ORDER FORM ─── */
+    .add-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .form-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-grid .full { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea { resize: vertical; min-height: 60px; }
+
+    select option { background: var(--surface2); }
+
+    /* ─── PAYMENT METHOD ─── */
+    .payment-methods {
+      display: flex;
+      gap: 8px;
+    }
+
+    .pay-btn {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pay-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(255,107,0,0.08); }
+    .pay-btn:hover:not(.active) { border-color: #444; color: var(--text); }
+
+    /* ─── AMOUNT ROW ─── */
+    .amount-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .amount-row .amount-field { flex: 1; }
+
+    .btn-paid {
+      padding: 10px 16px;
+      border: 1px solid var(--green);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--green);
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .btn-paid.active { background: var(--green); color: #000; }
+
+    /* ─── SUBMIT BUTTON ─── */
+    .btn-submit {
+      margin-top: 16px;
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+    }
+
+    .btn-submit:hover { background: var(--accent2); transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ─── ORDERS LIST ─── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .orders-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .order-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: start;
+      transition: border-color 0.2s;
+    }
+
+    .order-card:hover { border-color: #3e3e3e; }
+
+    .order-address {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .order-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-gotowka { background: rgba(34,197,94,0.15); color: var(--green); }
+    .badge-karta { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .badge-wolt { background: rgba(255,107,0,0.15); color: var(--accent); }
+    .badge-oplacone { background: rgba(34,197,94,0.25); color: var(--green); border: 1px solid var(--green); }
+
+    .order-amount {
+      font-family: 'Space Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent2);
+      text-align: right;
+    }
+
+    .order-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .order-time {
+      font-size: 11px;
+      color: #555;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .order-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .btn-icon {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: all 0.15s;
+    }
+
+    .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-icon.del:hover { border-color: var(--red); color: var(--red); }
+
+    /* ─── INLINE EDIT ─── */
+    .order-card.editing {
+      border-color: var(--accent);
+      background: #1e1400;
+    }
+
+    /* ─── SUMMARY ─── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .summary-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .summary-row:last-child { border-bottom: none; }
+
+    .summary-row .label { color: var(--text-muted); }
+
+    .summary-row .value {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      color: var(--accent2);
+    }
+
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .summary-total .label { font-weight: 700; font-size: 14px; }
+    .summary-total .value {
+      font-family: 'Space Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* ─── EMPTY STATE ─── */
+    .empty {
+      text-align: center;
+      padding: 48px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* ─── LOADER ─── */
+    .loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── DATE SEPARATOR ─── */
+    .date-sep {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #444;
+      padding: 16px 0 8px;
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.25s;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">🍕 Epicka</div>
+    <div class="auth-title">Dostawa</div>
+    <div class="auth-sub">Panel dostawcy — zaloguj się żeby zacząć</div>
+    <button class="btn-google" onclick="signInWithGoogle()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Zaloguj przez Google
+    </button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header>
+    <div class="header-logo">🍕 Epicka Dostawa</div>
+    <div class="header-user">
+      <img class="avatar" id="user-avatar" src="" alt="">
+      <span id="user-name"></span>
+      <button class="btn-signout" onclick="signOut()">Wyloguj</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('epicka', this)">Epicka</div>
+    <div class="tab" onclick="switchTab('tajska', this)">Tajska</div>
+    <div class="tab" onclick="switchTab('historia', this)">Historia</div>
+    <div class="tab" onclick="switchTab('podsumowanie', this)">Podsumowanie</div>
+  </div>
+
+  <!-- TAB: EPICKA / TAJSKA -->
+  <div id="tab-epicka" class="main">
+    <div class="add-form">
+      <div class="form-title">+ Nowe zamówienie — Epicka</div>
+      <div class="form-grid">
+        <div class="full">
+          <label>Adres</label>
+          <input type="text" id="e-adres" placeholder="ul. Przykładowa 12/3">
+        </div>
+        <div class="full">
+          <label>Notatka</label>
+          <textarea id="e-notatka" placeholder="Dzwonek nie działa, 3. piętro..."></textarea>
+        </div>
+        <div>
+          <label>Metoda płatności</label>
+          <div class="payment-methods">
+            <button class="pay-btn active" onclick="setPayment('e', 'Gotówka', this)">Gotówka</button>
+            <button class="pay-btn" onclick="setPayment('e', 'Karta', this)">Karta</button>
+            <button class="pay-btn" onclick="setPayment('e', 'WOLT', this)">WOLT</button>
+          </div>
+        </div>
+        <div>
+          <label>Kwota</label>
+          <div class="amount-row">
+            <div class="amount-field">
+              <input type="number" id="e-kwota" placeholder="49.90" step="0.01" min="0">
+            </div>
+            <button class="btn-paid" id="e-paid-btn" onclick="togglePaid('e')">Opłacone</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn-submit" onclick="addOrder('epicka')">Dodaj zamówienie</button>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Dzisiejsze zamówienia</div>
+    </div>
+    <div id="epicka-orders" class="orders-list"><div class="loader"><div class="spinner"></div></div></div>
+  </div>
+
+  <div id="tab-tajska" class="main" style="display:none">
+    <div class="add-form">
+      <div class="form-title">+ Nowe zamówienie — Tajska</div>
+      <div class="form-grid">
+        <div class="full">
+          <label>Adres</label>
+          <input type="text" id="t-adres" placeholder="ul. Przykładowa 12/3">
+        </div>
+        <div class="full">
+          <label>Notatka</label>
+          <textarea id="t-notatka" placeholder="Dzwonek nie działa, 3. piętro..."></textarea>
+        </div>
+        <div>
+          <label>Metoda płatności</label>
+          <div class="payment-methods">
+            <button class="pay-btn active" onclick="setPayment('t', 'Gotówka', this)">Gotówka</button>
+            <button class="pay-btn" onclick="setPayment('t', 'Karta', this)">Karta</button>
+            <button class="pay-btn" onclick="setPayment('t', 'WOLT', this)">WOLT</button>
+          </div>
+        </div>
+        <div>
+          <label>Kwota</label>
+          <div class="amount-row">
+            <div class="amount-field">
+              <input type="number" id="t-kwota" placeholder="49.90" step="0.01" min="0">
+            </div>
+            <button class="btn-paid" id="t-paid-btn" onclick="togglePaid('t')">Opłacone</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn-submit" onclick="addOrder('tajska')">Dodaj zamówienie</button>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Dzisiejsze zamówienia</div>
+    </div>
+    <div id="tajska-orders" class="orders-list"><div class="loader"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- TAB: HISTORIA -->
+  <div id="tab-historia" class="main" style="display:none">
+    <div class="section-header">
+      <div class="section-title">Historia zamówień</div>
+    </div>
+    <div id="historia-orders" class="orders-list"><div class="loader"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- TAB: PODSUMOWANIE -->
+  <div id="tab-podsumowanie" class="main" style="display:none">
+    <div class="section-header">
+      <div class="section-title">Podsumowanie finansowe</div>
+    </div>
+    <div id="summary-content"><div class="loader"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
+    query, where, orderBy, serverTimestamp, Timestamp
+  } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBJg0grKacduj-H5mGr82YwMQEfYDpP69g",
+    authDomain: "epicka-dostawa.firebaseapp.com",
+    projectId: "epicka-dostawa",
+    storageBucket: "epicka-dostawa.firebasestorage.app",
+    messagingSenderId: "1082967019384",
+    appId: "1:1082967019384:web:93b6b0b9dd8af16672028d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  let currentUser = null;
+  let paymentState = { e: 'Gotówka', t: 'Gotówka' };
+  let paidState = { e: false, t: false };
+
+  // ─── AUTH ───
+  window.signInWithGoogle = async () => {
+    try { await signInWithPopup(auth, provider); }
+    catch(e) { showToast('Błąd logowania: ' + e.message); }
+  };
+
+  window.signOut = async () => {
+    await fbSignOut(auth);
+  };
+
+  onAuthStateChanged(auth, user => {
+    currentUser = user;
+    if (user) {
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('user-name').textContent = user.displayName?.split(' ')[0] || 'User';
+      document.getElementById('user-avatar').src = user.photoURL || '';
+      loadOrders('epicka');
+    } else {
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('app').style.display = 'none';
+    }
+  });
+
+  // ─── PAYMENT / PAID TOGGLES ───
+  window.setPayment = (prefix, method, btn) => {
+    paymentState[prefix] = method;
+    btn.closest('.payment-methods').querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  };
+
+  window.togglePaid = (prefix) => {
+    paidState[prefix] = !paidState[prefix];
+    const btn = document.getElementById(prefix + '-paid-btn');
+    btn.classList.toggle('active', paidState[prefix]);
+    if (paidState[prefix]) {
+      document.getElementById(prefix + '-kwota').disabled = true;
+      document.getElementById(prefix + '-kwota').value = '';
+    } else {
+      document.getElementById(prefix + '-kwota').disabled = false;
+    }
+  };
+
+  // ─── ADD ORDER ───
+  window.addOrder = async (restauracja) => {
+    if (!currentUser) return;
+    const p = restauracja === 'epicka' ? 'e' : 't';
+    const adres = document.getElementById(p + '-adres').value.trim();
+    if (!adres) { showToast('Wpisz adres!'); return; }
+
+    const kwotaVal = document.getElementById(p + '-kwota').value;
+    const kwota = paidState[p] ? null : (kwotaVal ? parseFloat(kwotaVal) : null);
+    const oplacone = paidState[p] || false;
+
+    const btn = document.querySelector(`#tab-${restauracja} .btn-submit`);
+    btn.disabled = true;
+    btn.textContent = 'Zapisuję...';
+
+    try {
+      await addDoc(collection(db, 'orders'), {
+        uid: currentUser.uid,
+        restauracja,
+        adres,
+        notatka: document.getElementById(p + '-notatka').value.trim(),
+        platnosc: paymentState[p],
+        kwota,
+        oplacone,
+        createdAt: serverTimestamp()
+      });
+
+      // Reset form
+      document.getElementById(p + '-adres').value = '';
+      document.getElementById(p + '-notatka').value = '';
+      document.getElementById(p + '-kwota').value = '';
+      if (paidState[p]) { paidState[p] = false; document.getElementById(p + '-paid-btn').classList.remove('active'); document.getElementById(p + '-kwota').disabled = false; }
+      paymentState[p] = 'Gotówka';
+      document.querySelectorAll(`#tab-${restauracja} .pay-btn`).forEach((b, i) => b.classList.toggle('active', i === 0));
+
+      showToast('Zamówienie dodane ✓');
+      loadOrders(restauracja);
+    } catch(e) {
+      showToast('Błąd: ' + e.message);
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Dodaj zamówienie';
+  };
+
+  // ─── LOAD ORDERS ───
+  window.loadOrders = async (restauracja, targetEl) => {
+    if (!currentUser) return;
+    const el = targetEl || document.getElementById(restauracja + '-orders');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    try {
+      const q = query(
+        collection(db, 'orders'),
+        where('uid', '==', currentUser.uid),
+        where('restauracja', '==', restauracja),
+        where('createdAt', '>=', Timestamp.fromDate(today)),
+        orderBy('createdAt', 'desc')
+      );
+      const snap = await getDocs(q);
+      renderOrders(snap.docs, el);
+    } catch(e) {
+      el.innerHTML = `<div class="empty"><div>⚠️</div>${e.message}</div>`;
+    }
+  };
+
+  window.loadHistoria = async () => {
+    if (!currentUser) return;
+    const el = document.getElementById('historia-orders');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+    try {
+      const q = query(
+        collection(db, 'orders'),
+        where('uid', '==', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const snap = await getDocs(q);
+      renderOrders(snap.docs, el, true);
+    } catch(e) {
+      el.innerHTML = `<div class="empty"><div>⚠️</div>${e.message}</div>`;
+    }
+  };
+
+  window.loadPodsumowanie = async () => {
+    if (!currentUser) return;
+    const el = document.getElementById('summary-content');
+    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+    try {
+      const q = query(
+        collection(db, 'orders'),
+        where('uid', '==', currentUser.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const snap = await getDocs(q);
+      const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderPodsumowanie(orders, el);
+    } catch(e) {
+      el.innerHTML = `<div class="empty"><div>⚠️</div>${e.message}</div>`;
+    }
+  };
+
+  // ─── RENDER ORDERS ───
+  function renderOrders(docs, el, showDate = false) {
+    if (docs.length === 0) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📦</div>Brak zamówień</div>';
+      return;
+    }
+
+    let html = '';
+    let lastDate = '';
+
+    docs.forEach(docSnap => {
+      const o = { id: docSnap.id, ...docSnap.data() };
+      const date = o.createdAt?.toDate ? o.createdAt.toDate() : new Date();
+
+      if (showDate) {
+        const dateStr = date.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
+        if (dateStr !== lastDate) {
+          html += `<div class="date-sep">${dateStr}</div>`;
+          lastDate = dateStr;
+        }
+      }
+
+      const time = date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+      const kwotaStr = o.oplacone ? '<span class="badge badge-oplacone">OPŁACONE</span>' :
+        (o.kwota != null ? `<div class="order-amount">${o.kwota.toFixed(2)} zł</div>` : '');
+      const payBadge = `badge-${o.platnosc?.toLowerCase()}`;
+
+      html += `
+        <div class="order-card" id="card-${o.id}">
+          <div>
+            <div class="order-address">${o.adres}</div>
+            <div class="order-meta">
+              <span class="badge ${payBadge}">${o.platnosc}</span>
+              ${o.oplacone ? '<span class="badge badge-oplacone">OPŁACONE</span>' : ''}
+              <span class="order-time">${time}</span>
+              ${o.restauracja ? `<span class="badge" style="background:#333;color:#999">${o.restauracja}</span>` : ''}
+            </div>
+            ${o.notatka ? `<div class="order-note">${o.notatka}</div>` : ''}
+            <div class="order-actions">
+              <button class="btn-icon" onclick="editOrder('${o.id}')" title="Edytuj">✏️</button>
+              <button class="btn-icon del" onclick="deleteOrder('${o.id}')" title="Usuń">🗑️</button>
+            </div>
+          </div>
+          <div>${!o.oplacone && o.kwota != null ? `<div class="order-amount">${o.kwota.toFixed(2)} zł</div>` : kwotaStr}</div>
+        </div>`;
+    });
+
+    el.innerHTML = html;
+  }
+
+  // ─── EDIT ORDER ───
+  window.editOrder = async (id) => {
+    const card = document.getElementById('card-' + id);
+    if (!card) return;
+    card.classList.add('editing');
+
+    // Get current data
+    const q = query(collection(db, 'orders'), where('uid', '==', currentUser.uid));
+    const snap = await getDocs(q);
+    const docSnap = snap.docs.find(d => d.id === id);
+    if (!docSnap) return;
+    const o = docSnap.data();
+
+    card.querySelector('.order-actions').innerHTML = `
+      <input type="text" id="edit-adres-${id}" value="${o.adres}" style="margin-right:8px;width:200px">
+      <input type="number" id="edit-kwota-${id}" value="${o.kwota || ''}" placeholder="kwota" style="width:80px;margin-right:8px">
+      <button class="btn-icon" onclick="saveEdit('${id}', '${o.restauracja}')">💾</button>
+      <button class="btn-icon" onclick="cancelEdit('${id}')">✕</button>
+    `;
+  };
+
+  window.saveEdit = async (id, restauracja) => {
+    const adres = document.getElementById('edit-adres-' + id)?.value.trim();
+    const kwotaVal = document.getElementById('edit-kwota-' + id)?.value;
+    const kwota = kwotaVal ? parseFloat(kwotaVal) : null;
+
+    try {
+      await updateDoc(doc(db, 'orders', id), { adres, kwota });
+      showToast('Zapisano ✓');
+      const card = document.getElementById('card-' + id);
+      card?.classList.remove('editing');
+      loadOrders(restauracja);
+    } catch(e) { showToast('Błąd: ' + e.message); }
+  };
+
+  window.cancelEdit = (id) => {
+    const card = document.getElementById('card-' + id);
+    card?.classList.remove('editing');
+    // reload current tab
+    const activeTab = document.querySelector('.tab.active')?.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
+    if (activeTab === 'epicka' || activeTab === 'tajska') loadOrders(activeTab);
+    else if (activeTab === 'historia') loadHistoria();
+  };
+
+  // ─── DELETE ORDER ───
+  window.deleteOrder = async (id) => {
+    if (!confirm('Usunąć to zamówienie?')) return;
+    try {
+      await deleteDoc(doc(db, 'orders', id));
+      showToast('Usunięto');
+      const activeTab = document.querySelector('.tab.active')?.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
+      if (activeTab === 'epicka' || activeTab === 'tajska') loadOrders(activeTab);
+      else if (activeTab === 'historia') loadHistoria();
+    } catch(e) { showToast('Błąd: ' + e.message); }
+  };
+
+  // ─── SUMMARY ───
+  function renderPodsumowanie(orders, el) {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const todayOrders = orders.filter(o => o.createdAt?.toDate && o.createdAt.toDate() >= today);
+    const monthOrders = orders.filter(o => o.createdAt?.toDate && o.createdAt.toDate() >= firstOfMonth);
+
+    function calcStats(list) {
+      const stats = { Gotówka: 0, Karta: 0, WOLT: 0, oplacone: 0, total: 0 };
+      list.forEach(o => {
+        if (o.oplacone) { stats.oplacone++; }
+        else if (o.kwota != null) {
+          stats[o.platnosc] = (stats[o.platnosc] || 0) + o.kwota;
+          stats.total += o.kwota;
+        }
+      });
+      return stats;
+    }
+
+    const ds = calcStats(todayOrders);
+    const ms = calcStats(monthOrders);
+
+    el.innerHTML = `
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-card-title">📅 Dzisiaj (${todayOrders.length} zamówień)</div>
+          <div class="summary-row"><span class="label">💵 Gotówka</span><span class="value">${ds.Gotówka.toFixed(2)} zł</span></div>
+          <div class="summary-row"><span class="label">💳 Karta</span><span class="value">${ds.Karta.toFixed(2)} zł</span></div>
+          <div class="summary-row"><span class="label">🟠 WOLT</span><span class="value">${ds.WOLT.toFixed(2)} zł</span></div>
+          <div class="summary-row"><span class="label">✅ Opłacone z góry</span><span class="value">${ds.oplacone} szt.</span></div>
+          <div class="summary-total"><span class="label">Razem</span><span class="value">${ds.total.toFixed(2)} zł</span></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-title">📆 Ten miesiąc (${monthOrders.length} zamówień)</div>
+          <div class="summary-row"><span class="label">💵 Gotówka</span><span class="value">${ms.Gotówka.toFixed(2)} zł</span></div>
+          <div class="summary-row"><span class="label">💳 Karta</span><span class="value">${ms.Karta.toFixed(2)} zł</span></div>
+          <div class="summary-row"><span class="label">🟠 WOLT</span><span class="value">${ms.WOLT.toFixed(2)} zł</span></div>
+          <div class="summary-row"><span class="label">✅ Opłacone z góry</span><span class="value">${ms.oplacone} szt.</span></div>
+          <div class="summary-total"><span class="label">Razem</span><span class="value">${ms.total.toFixed(2)} zł</span></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── TABS ───
+  window.switchTab = (tab, el) => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    ['epicka','tajska','historia','podsumowanie'].forEach(t => {
+      document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+    });
+    if (tab === 'historia') loadHistoria();
+    else if (tab === 'podsumowanie') loadPodsumowanie();
+    else loadOrders(tab);
+  };
+
+  // ─── TOAST ───
+  window.showToast = (msg) => {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  };
+</script>
+</body>
+</html>
