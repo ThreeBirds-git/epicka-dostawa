@@ -1,1042 +1,775 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Epicka Dostawa</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0f0f0f;
-      --surface: #1a1a1a;
-      --surface2: #222222;
-      --border: #2e2e2e;
-      --accent: #ff6b00;
-      --accent2: #ffaa00;
-      --text: #f0f0f0;
-      --text-muted: #888;
-      --green: #22c55e;
-      --blue: #3b82f6;
-      --red: #ef4444;
-      --radius: 10px;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Syne', sans-serif;
-      min-height: 100vh;
-    }
-
-    /* ─── AUTH SCREEN ─── */
-    #auth-screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(ellipse at 30% 50%, #1a0a00 0%, #0f0f0f 60%);
-    }
-
-    .auth-card {
-      width: 360px;
-      padding: 48px 40px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      text-align: center;
-    }
-
-    .auth-logo {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 8px;
-    }
-
-    .auth-title {
-      font-size: 28px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .auth-sub {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 36px;
-    }
-
-    .btn-google {
-      width: 100%;
-      padding: 14px;
-      background: #fff;
-      color: #333;
-      border: none;
-      border-radius: var(--radius);
-      font-family: 'Syne', sans-serif;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-
-    .btn-google:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(255,107,0,0.3);
-    }
-
-    .btn-google svg { width: 20px; height: 20px; }
-
-    /* ─── MAIN APP ─── */
-    #app { display: none; min-height: 100vh; }
-
-    /* ─── HEADER ─── */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(15,15,15,0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .header-logo {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--accent);
-    }
-
-    .header-user {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    .avatar {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      border: 2px solid var(--accent);
-      object-fit: cover;
-    }
-
-    .btn-signout {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      padding: 5px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      font-family: 'Syne', sans-serif;
-      transition: border-color 0.2s, color 0.2s;
-    }
-    .btn-signout:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* ─── TABS ─── */
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      background: var(--bg);
-    }
-
-    .tab {
-      padding: 14px 20px;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      cursor: pointer;
-      color: var(--text-muted);
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      transition: color 0.2s, border-color 0.2s;
-    }
-
-    .tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
-
-    /* ─── MAIN CONTENT ─── */
-    .main {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    /* ─── ADD ORDER FORM ─── */
-    .add-form {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px;
-      margin-bottom: 24px;
-    }
-
-    .form-title {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 16px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .form-grid .full { grid-column: 1 / -1; }
-
-    label {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select,
-    textarea {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      color: var(--text);
-      font-family: 'Syne', sans-serif;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--accent);
-    }
-
-    textarea { resize: vertical; min-height: 60px; }
-
-    select option { background: var(--surface2); }
-
-    /* ─── PAYMENT METHOD ─── */
-    .payment-methods {
-      display: flex;
-      gap: 8px;
-    }
-
-    .pay-btn {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface2);
-      color: var(--text-muted);
-      font-family: 'Syne', sans-serif;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .pay-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(255,107,0,0.08); }
-    .pay-btn:hover:not(.active) { border-color: #444; color: var(--text); }
-
-    /* ─── AMOUNT ROW ─── */
-    .amount-row {
-      display: flex;
-      gap: 8px;
-      align-items: flex-end;
-    }
-
-    .amount-row .amount-field { flex: 1; }
-
-    .btn-paid {
-      padding: 10px 16px;
-      border: 1px solid var(--green);
-      border-radius: 8px;
-      background: transparent;
-      color: var(--green);
-      font-family: 'Syne', sans-serif;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.15s;
-    }
-
-    .btn-paid.active { background: var(--green); color: #000; }
-
-    /* ─── SUBMIT BUTTON ─── */
-    .btn-submit {
-      margin-top: 16px;
-      width: 100%;
-      padding: 14px;
-      background: var(--accent);
-      color: #000;
-      border: none;
-      border-radius: var(--radius);
-      font-family: 'Syne', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.15s;
-    }
-
-    .btn-submit:hover { background: var(--accent2); transform: translateY(-1px); }
-    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-    /* ─── ORDERS LIST ─── */
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    .section-title {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
-
-    .orders-list { display: flex; flex-direction: column; gap: 8px; }
-
-    .order-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 20px;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
-      align-items: start;
-      transition: border-color 0.2s;
-    }
-
-    .order-card:hover { border-color: #3e3e3e; }
-
-    .order-address {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .order-meta {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .badge {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 4px;
-    }
-
-    .badge-gotowka { background: rgba(34,197,94,0.15); color: var(--green); }
-    .badge-karta { background: rgba(59,130,246,0.15); color: var(--blue); }
-    .badge-wolt { background: rgba(255,107,0,0.15); color: var(--accent); }
-    .badge-oplacone { background: rgba(34,197,94,0.25); color: var(--green); border: 1px solid var(--green); }
-
-    .order-amount {
-      font-family: 'Space Mono', monospace;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--accent2);
-      text-align: right;
-    }
-
-    .order-note {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      font-style: italic;
-    }
-
-    .order-time {
-      font-size: 11px;
-      color: #555;
-      font-family: 'Space Mono', monospace;
-    }
-
-    .order-actions {
-      display: flex;
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .btn-icon {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      transition: all 0.15s;
-    }
-
-    .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-icon.del:hover { border-color: var(--red); color: var(--red); }
-
-    /* ─── INLINE EDIT ─── */
-    .order-card.editing {
-      border-color: var(--accent);
-      background: #1e1400;
-    }
-
-    /* ─── SUMMARY ─── */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .summary-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-    }
-
-    .summary-card-title {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 13px;
-    }
-
-    .summary-row:last-child { border-bottom: none; }
-
-    .summary-row .label { color: var(--text-muted); }
-
-    .summary-row .value {
-      font-family: 'Space Mono', monospace;
-      font-weight: 700;
-      color: var(--accent2);
-    }
-
-    .summary-total {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-
-    .summary-total .label { font-weight: 700; font-size: 14px; }
-    .summary-total .value {
-      font-family: 'Space Mono', monospace;
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    /* ─── EMPTY STATE ─── */
-    .empty {
-      text-align: center;
-      padding: 48px;
-      color: var(--text-muted);
-      font-size: 14px;
-    }
-
-    .empty-icon { font-size: 40px; margin-bottom: 12px; }
-
-    /* ─── LOADER ─── */
-    .loader {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-    }
-
-    .spinner {
-      width: 28px;
-      height: 28px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ─── DATE SEPARATOR ─── */
-    .date-sep {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: #444;
-      padding: 16px 0 8px;
-      font-family: 'Space Mono', monospace;
-    }
-
-    /* ─── TOAST ─── */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: var(--surface);
-      border: 1px solid var(--accent);
-      color: var(--text);
-      padding: 12px 20px;
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-weight: 700;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: all 0.25s;
-      z-index: 999;
-      pointer-events: none;
-    }
-
-    .toast.show { opacity: 1; transform: translateY(0); }
-
-    @media (max-width: 600px) {
-      .form-grid { grid-template-columns: 1fr; }
-      .summary-grid { grid-template-columns: 1fr; }
-      .main { padding: 16px; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EPICKA — Dostawa</title>
+<link rel="apple-touch-icon" href="icon.png">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="icon" href="icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --red: #E8231A; --cream: #EDE8DF; --cream-dark: #E0D9CE; --border: #D4CBB8;
+    --text: #1a1a1a; --muted: #8a7f72; --green: #2a7a4a; --card-bg: #F5F1EA; --active-tab: #5C4A3A;
+  }
+  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; }
+  .checker { height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
+  header { background: var(--cream); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 0 var(--border); }
+  .header-inner { padding: 10px 16px 12px; display: flex; align-items: center; gap: 10px; }
+  .logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 28px; color: var(--red); letter-spacing: 2px; line-height: 1; }
+  .logo span { font-size: 12px; display: block; font-weight: 700; letter-spacing: 3px; color: var(--muted); margin-top: -1px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .header-counter { background: var(--red); color: var(--cream); padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; }
+  .header-user { display: flex; align-items: center; gap: 6px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); object-fit: cover; }
+  .user-name { font-size: 12px; font-weight: 600; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; }
+  .signout-btn { background: none; border: 1.5px solid var(--border); border-radius: 4px; color: var(--muted); font-family: 'Barlow', sans-serif; font-size: 11px; padding: 3px 8px; cursor: pointer; }
+  .signout-btn:active { background: var(--border); }
+  .tabs { display: flex; background: var(--cream-dark); border-bottom: 2px solid var(--red); position: sticky; top: 72px; z-index: 99; }
+  .tab { flex: 1; padding: 11px 6px; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .tab svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
+  .tab.active { color: var(--active-tab); border-bottom-color: var(--active-tab); background: var(--cream); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .section { padding: 14px 14px 0; }
+  .section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 10px; }
+  .input-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; padding: 12px; }
+  .input-wrapper { position: relative; }
+  .addr-input { width: 100%; background: white; border: 2px solid var(--border); border-radius: 6px; padding: 11px 46px 11px 12px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; outline: none; transition: border-color 0.2s; }
+  .addr-input:focus { border-color: var(--red); }
+  .addr-input::placeholder { color: var(--muted); }
+  .mic-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; display: flex; align-items: center; }
+  .mic-btn svg { width: 20px; height: 20px; fill: currentColor; }
+  .mic-btn.listening { color: var(--red); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .suggestions { background: white; border: 2px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; display: none; }
+  .suggestion-item { padding: 11px 12px; font-size: 14px; cursor: pointer; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 8px; }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:active { background: var(--cream); }
+  .sug-pin { color: var(--red); flex-shrink: 0; margin-top: 2px; }
+  .sug-main { font-weight: 600; line-height: 1.3; }
+  .sug-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .note-row { display: flex; gap: 8px; margin-top: 8px; }
+  .note-input { flex: 1; background: white; border: 2px solid var(--border); border-radius: 6px; padding: 10px 12px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 14px; outline: none; }
+  .note-input::placeholder { color: var(--muted); }
+  .note-input:focus { border-color: var(--red); }
+  .payment-row { display: flex; gap: 6px; margin-top: 8px; }
+  .pay-btn { flex: 1; background: white; border: 2px solid var(--border); border-radius: 6px; padding: 8px 4px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: all 0.15s; text-transform: uppercase; }
+  .pay-btn.active { border-color: var(--active-tab); color: var(--active-tab); background: rgba(92,74,58,0.08); }
+  .paid-btn { background: white; border: 2px solid var(--border); border-radius: 6px; padding: 8px 10px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.15s; text-transform: uppercase; }
+  .paid-btn.active { border-color: var(--green); color: var(--green); background: rgba(42,122,74,0.08); }
+  .amount-row { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+  .amount-input { flex: 1; background: white; border: 2px solid var(--border); border-radius: 6px; padding: 9px 12px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600; outline: none; }
+  .amount-input:focus { border-color: var(--red); }
+  .amount-input::placeholder { color: var(--muted); }
+  .amount-label { font-size: 12px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .add-btn { background: var(--red); border: none; border-radius: 6px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; }
+  .add-btn:active { opacity: 0.8; }
+  .stops-list { display: flex; flex-direction: column; gap: 6px; }
+  .stop-item { background: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; padding: 11px 12px; display: flex; align-items: flex-start; gap: 8px; position: relative; overflow: hidden; transition: opacity 0.2s, border-color 0.2s, background 0.2s; }
+  .stop-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--red); }
+  .stop-item.delivered::before { background: var(--green); }
+  .stop-item.delivered { opacity: 0.5; }
+  .stop-item.dragging { opacity: 0.35; border: 2px dashed var(--red); }
+  .stop-item.drag-over { border-color: var(--active-tab); background: var(--cream-dark); }
+  .drag-handle { color: var(--border); cursor: grab; display: flex; align-items: center; padding-top: 4px; flex-shrink: 0; }
+  .drag-handle svg { width: 16px; height: 16px; fill: currentColor; }
+  .stop-item.delivered .drag-handle { visibility: hidden; }
+  .stop-num { background: var(--red); color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 900; width: 26px; height: 26px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .stop-num svg { width: 14px; height: 14px; fill: white; }
+  .stop-item.delivered .stop-num { background: var(--green); }
+  .stop-info { flex: 1; min-width: 0; }
+  .stop-address { font-size: 14px; font-weight: 600; line-height: 1.4; word-break: break-word; }
+  .stop-note { font-size: 12px; color: #8a5c00; background: #FFF3CC; display: inline-block; padding: 2px 7px; border-radius: 4px; margin-top: 4px; font-weight: 500; }
+  .stop-meta { display: flex; gap: 6px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
+  .stop-time { font-size: 11px; color: var(--muted); }
+  .stop-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; }
+  .badge-gotówka, .badge-gotowka { background: rgba(42,122,74,0.12); color: var(--green); }
+  .badge-karta { background: rgba(59,130,246,0.12); color: #2563eb; }
+  .badge-wolt { background: rgba(232,35,26,0.12); color: var(--red); }
+  .badge-oplacone { background: rgba(42,122,74,0.2); color: var(--green); border: 1px solid rgba(42,122,74,0.3); }
+  .stop-amount { font-size: 13px; font-weight: 700; color: var(--active-tab); }
+  .stop-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .icon-btn { background: var(--cream-dark); border: 1.5px solid var(--border); border-radius: 6px; color: var(--text); width: 34px; height: 34px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .icon-btn svg { width: 16px; height: 16px; fill: currentColor; }
+  .icon-btn:active { background: var(--border); }
+  .ok-btn { background: rgba(42,122,74,0.12); border-color: rgba(42,122,74,0.3); color: var(--green); }
+  .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); background: var(--card-bg); border: 2px dashed var(--border); border-radius: 8px; }
+  .empty-state svg { width: 40px; height: 40px; fill: var(--border); margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.7; }
+  .plan-btn { background: var(--red); border: none; border-radius: 8px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; width: 100%; padding: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 3px 0 rgba(0,0,0,0.2); transition: all 0.15s; }
+  .plan-btn svg { width: 22px; height: 22px; fill: white; flex-shrink: 0; }
+  .plan-btn:active { opacity: 0.85; box-shadow: 0 1px 0 rgba(0,0,0,0.2); transform: translateY(2px); }
+  .plan-btn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; transform: none; }
+  .sub-tabs { display: flex; background: var(--cream-dark); border: 2px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+  .sub-tab { flex: 1; padding: 9px; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; }
+  .sub-tab.active { background: var(--active-tab); color: white; }
+  .history-item { background: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; position: relative; overflow: hidden; }
+  .history-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--red); }
+  .history-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .history-date { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .history-count { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--red); line-height: 1; }
+  .history-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 6px; }
+  .history-addrs { font-size: 12px; color: var(--muted); line-height: 1.9; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 6px; }
+  .no-history { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; background: var(--card-bg); border: 2px dashed var(--border); border-radius: 8px; line-height: 1.7; }
+  .summary-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+  .summary-card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: var(--active-tab); margin-bottom: 10px; }
+  .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row .s-label { color: var(--muted); font-weight: 500; }
+  .summary-row .s-val { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: var(--text); }
+  .summary-total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 2px solid var(--border); }
+  .summary-total-row .s-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; }
+  .summary-total-row .s-val { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; color: var(--red); }
+  .edit-row { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .edit-input { flex: 1; min-width: 120px; background: white; border: 2px solid var(--red); border-radius: 6px; padding: 7px 10px; font-family: 'Barlow', sans-serif; font-size: 13px; outline: none; color: var(--text); }
+  .save-btn { background: var(--green); border: none; border-radius: 6px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; padding: 7px 14px; cursor: pointer; }
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; display: none; align-items: flex-end; justify-content: center; }
+  .overlay.show { display: flex; }
+  .dialog { background: var(--cream); border-radius: 16px 16px 0 0; padding: 24px 20px 36px; width: 100%; max-width: 480px; }
+  .dialog-icon { font-size: 36px; text-align: center; margin-bottom: 12px; }
+  .dialog-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; text-align: center; color: var(--text); margin-bottom: 6px; letter-spacing: 1px; }
+  .dialog-addr { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 20px; line-height: 1.5; }
+  .dialog-btns { display: flex; gap: 10px; }
+  .dialog-btn { flex: 1; padding: 14px; border: none; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; letter-spacing: 1px; cursor: pointer; }
+  .dialog-btn.cancel { background: var(--cream-dark); color: var(--text); border: 2px solid var(--border); }
+  .dialog-btn.confirm { background: var(--green); color: white; }
+  .dialog-btn:active { opacity: 0.85; }
+  #confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 999; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text); color: var(--cream); padding: 10px 20px; border-radius: 6px; font-size: 14px; font-weight: 600; z-index: 998; transition: transform 0.3s; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .bottom-checker { position: fixed; bottom: 0; left: 0; right: 0; height: 8px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 8px, var(--cream) 8px, var(--cream) 16px); z-index: 200; }
+  #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--cream); }
+  .auth-card { width: 320px; background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px; padding: 32px 24px; text-align: center; overflow: hidden; }
+  .auth-checker { height: 8px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 8px, var(--cream) 8px, var(--cream) 16px); margin: -32px -24px 24px; }
+  .auth-logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 36px; color: var(--red); letter-spacing: 3px; }
+  .auth-logo span { font-size: 13px; display: block; font-weight: 700; letter-spacing: 4px; color: var(--muted); margin-top: -2px; }
+  .auth-sub { font-size: 13px; color: var(--muted); margin: 12px 0 24px; line-height: 1.5; }
+  .btn-google { width: 100%; padding: 13px; background: white; border: 2px solid var(--border); border-radius: 8px; font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: border-color 0.2s; color: var(--text); }
+  .btn-google:hover { border-color: var(--red); }
+  .btn-google:active { background: var(--cream-dark); }
+  .btn-google svg { width: 20px; height: 20px; flex-shrink: 0; }
+  .loader { display: flex; align-items: center; justify-content: center; padding: 32px; }
+  .spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--red); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
 </head>
 <body>
 
-<!-- AUTH SCREEN -->
 <div id="auth-screen">
   <div class="auth-card">
-    <div class="auth-logo">🍕 Epicka</div>
-    <div class="auth-title">Dostawa</div>
-    <div class="auth-sub">Panel dostawcy — zaloguj się żeby zacząć</div>
+    <div class="auth-checker"></div>
+    <div class="auth-logo">EPICKA<span>DOSTAWA</span></div>
+    <div class="auth-sub">Zaloguj się żeby zacząć śledzić dostawy</div>
     <button class="btn-google" onclick="signInWithGoogle()">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
+      <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
       Zaloguj przez Google
     </button>
   </div>
 </div>
 
-<!-- MAIN APP -->
-<div id="app">
-  <header>
-    <div class="header-logo">🍕 Epicka Dostawa</div>
-    <div class="header-user">
-      <img class="avatar" id="user-avatar" src="" alt="">
-      <span id="user-name"></span>
-      <button class="btn-signout" onclick="signOut()">Wyloguj</button>
-    </div>
-  </header>
-
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('epicka', this)">Epicka</div>
-    <div class="tab" onclick="switchTab('tajska', this)">Tajska</div>
-    <div class="tab" onclick="switchTab('historia', this)">Historia</div>
-    <div class="tab" onclick="switchTab('podsumowanie', this)">Podsumowanie</div>
-  </div>
-
-  <!-- TAB: EPICKA / TAJSKA -->
-  <div id="tab-epicka" class="main">
-    <div class="add-form">
-      <div class="form-title">+ Nowe zamówienie — Epicka</div>
-      <div class="form-grid">
-        <div class="full">
-          <label>Adres</label>
-          <input type="text" id="e-adres" placeholder="ul. Przykładowa 12/3">
-        </div>
-        <div class="full">
-          <label>Notatka</label>
-          <textarea id="e-notatka" placeholder="Dzwonek nie działa, 3. piętro..."></textarea>
-        </div>
-        <div>
-          <label>Metoda płatności</label>
-          <div class="payment-methods">
-            <button class="pay-btn active" onclick="setPayment('e', 'Gotówka', this)">Gotówka</button>
-            <button class="pay-btn" onclick="setPayment('e', 'Karta', this)">Karta</button>
-            <button class="pay-btn" onclick="setPayment('e', 'WOLT', this)">WOLT</button>
-          </div>
-        </div>
-        <div>
-          <label>Kwota</label>
-          <div class="amount-row">
-            <div class="amount-field">
-              <input type="number" id="e-kwota" placeholder="49.90" step="0.01" min="0">
-            </div>
-            <button class="btn-paid" id="e-paid-btn" onclick="togglePaid('e')">Opłacone</button>
-          </div>
-        </div>
+<div id="app" style="display:none">
+<header>
+  <div class="checker"></div>
+  <div class="header-inner">
+    <div class="logo">EPICKA<span>DOSTAWA</span></div>
+    <div class="header-right">
+      <div class="header-counter" id="headerCounter">0 PRZYSTANKÓW</div>
+      <div class="header-user">
+        <img class="avatar" id="userAvatar" src="" alt="">
+        <span class="user-name" id="userName"></span>
+        <button class="signout-btn" onclick="doSignOut()">Wyloguj</button>
       </div>
-      <button class="btn-submit" onclick="addOrder('epicka')">Dodaj zamówienie</button>
     </div>
-
-    <div class="section-header">
-      <div class="section-title">Dzisiejsze zamówienia</div>
-    </div>
-    <div id="epicka-orders" class="orders-list"><div class="loader"><div class="spinner"></div></div></div>
   </div>
+</header>
 
-  <div id="tab-tajska" class="main" style="display:none">
-    <div class="add-form">
-      <div class="form-title">+ Nowe zamówienie — Tajska</div>
-      <div class="form-grid">
-        <div class="full">
-          <label>Adres</label>
-          <input type="text" id="t-adres" placeholder="ul. Przykładowa 12/3">
-        </div>
-        <div class="full">
-          <label>Notatka</label>
-          <textarea id="t-notatka" placeholder="Dzwonek nie działa, 3. piętro..."></textarea>
-        </div>
-        <div>
-          <label>Metoda płatności</label>
-          <div class="payment-methods">
-            <button class="pay-btn active" onclick="setPayment('t', 'Gotówka', this)">Gotówka</button>
-            <button class="pay-btn" onclick="setPayment('t', 'Karta', this)">Karta</button>
-            <button class="pay-btn" onclick="setPayment('t', 'WOLT', this)">WOLT</button>
-          </div>
-        </div>
-        <div>
-          <label>Kwota</label>
-          <div class="amount-row">
-            <div class="amount-field">
-              <input type="number" id="t-kwota" placeholder="49.90" step="0.01" min="0">
-            </div>
-            <button class="btn-paid" id="t-paid-btn" onclick="togglePaid('t')">Opłacone</button>
-          </div>
-        </div>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('epicka',this)">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
+    EPICKA
+  </button>
+  <button class="tab" onclick="switchTab('tajska',this)">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
+    TAJSKA
+  </button>
+  <button class="tab" onclick="switchTab('historia',this)">
+    <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+    HISTORIA
+  </button>
+  <button class="tab" onclick="switchTab('podsumowanie',this)">
+    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+    KASA
+  </button>
+</div>
+
+<div id="tab-epicka" class="tab-content active">
+  <div class="section" style="margin-top:14px">
+    <div class="section-title">Dodaj przystanek — Epicka</div>
+    <div class="input-card">
+      <div class="input-wrapper">
+        <input type="text" id="eAddrInput" class="addr-input" placeholder="Wpisz adres dostawy..." autocomplete="off"/>
+        <button class="mic-btn" id="eMicBtn" onclick="toggleVoice('e')">
+          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+        </button>
       </div>
-      <button class="btn-submit" onclick="addOrder('tajska')">Dodaj zamówienie</button>
+      <div id="eSuggestions" class="suggestions"></div>
+      <div class="note-row">
+        <input type="text" id="eNoteInput" class="note-input" placeholder="Notatka: piętro, domofon..."/>
+        <button class="add-btn" onclick="addStop('epicka')">+</button>
+      </div>
+      <div class="payment-row">
+        <button class="pay-btn active" onclick="setPay('e','Gotówka',this)">💵 Gotówka</button>
+        <button class="pay-btn" onclick="setPay('e','Karta',this)">💳 Karta</button>
+        <button class="pay-btn" onclick="setPay('e','WOLT',this)">🟠 WOLT</button>
+        <button class="paid-btn" id="ePaidBtn" onclick="togglePaid('e')">✓ Opłacone</button>
+      </div>
+      <div class="amount-row">
+        <input type="number" id="eAmountInput" class="amount-input" placeholder="0.00" step="0.01" min="0"/>
+        <span class="amount-label">zł</span>
+      </div>
     </div>
-
-    <div class="section-header">
-      <div class="section-title">Dzisiejsze zamówienia</div>
-    </div>
-    <div id="tajska-orders" class="orders-list"><div class="loader"><div class="spinner"></div></div></div>
   </div>
-
-  <!-- TAB: HISTORIA -->
-  <div id="tab-historia" class="main" style="display:none">
-    <div class="section-header">
-      <div class="section-title">Historia zamówień</div>
-    </div>
-    <div id="historia-orders" class="orders-list"><div class="loader"><div class="spinner"></div></div></div>
+  <div class="section" style="margin-top:14px">
+    <div class="section-title" id="eStopsTitle">PRZYSTANKI (0 aktywnych)</div>
+    <div class="stops-list" id="eStopsList"></div>
   </div>
-
-  <!-- TAB: PODSUMOWANIE -->
-  <div id="tab-podsumowanie" class="main" style="display:none">
-    <div class="section-header">
-      <div class="section-title">Podsumowanie finansowe</div>
-    </div>
-    <div id="summary-content"><div class="loader"><div class="spinner"></div></div></div>
+  <div class="section" style="margin-top:14px; padding-bottom:28px">
+    <button class="plan-btn" id="ePlanBtn" onclick="planRoute('epicka')" disabled>
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
+      ZAPLANUJ TRASĘ
+    </button>
   </div>
 </div>
 
+<div id="tab-tajska" class="tab-content">
+  <div class="section" style="margin-top:14px">
+    <div class="section-title">Dodaj przystanek — Tajska</div>
+    <div class="input-card">
+      <div class="input-wrapper">
+        <input type="text" id="tAddrInput" class="addr-input" placeholder="Wpisz adres dostawy..." autocomplete="off"/>
+        <button class="mic-btn" id="tMicBtn" onclick="toggleVoice('t')">
+          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+        </button>
+      </div>
+      <div id="tSuggestions" class="suggestions"></div>
+      <div class="note-row">
+        <input type="text" id="tNoteInput" class="note-input" placeholder="Notatka: piętro, domofon..."/>
+        <button class="add-btn" onclick="addStop('tajska')">+</button>
+      </div>
+      <div class="payment-row">
+        <button class="pay-btn active" onclick="setPay('t','Gotówka',this)">💵 Gotówka</button>
+        <button class="pay-btn" onclick="setPay('t','Karta',this)">💳 Karta</button>
+        <button class="pay-btn" onclick="setPay('t','WOLT',this)">🟠 WOLT</button>
+        <button class="paid-btn" id="tPaidBtn" onclick="togglePaid('t')">✓ Opłacone</button>
+      </div>
+      <div class="amount-row">
+        <input type="number" id="tAmountInput" class="amount-input" placeholder="0.00" step="0.01" min="0"/>
+        <span class="amount-label">zł</span>
+      </div>
+    </div>
+  </div>
+  <div class="section" style="margin-top:14px">
+    <div class="section-title" id="tStopsTitle">PRZYSTANKI (0 aktywnych)</div>
+    <div class="stops-list" id="tStopsList"></div>
+  </div>
+  <div class="section" style="margin-top:14px; padding-bottom:28px">
+    <button class="plan-btn" id="tPlanBtn" onclick="planRoute('tajska')" disabled>
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
+      ZAPLANUJ TRASĘ
+    </button>
+  </div>
+</div>
+
+<div id="tab-historia" class="tab-content">
+  <div class="section" style="margin-top:14px; padding-bottom:28px">
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchSubTab('epicka-h',this)">🍕 Epicka</button>
+      <button class="sub-tab" onclick="switchSubTab('tajska-h',this)">🍜 Tajska</button>
+    </div>
+    <div id="subtab-epicka-h"></div>
+    <div id="subtab-tajska-h" style="display:none"></div>
+  </div>
+</div>
+
+<div id="tab-podsumowanie" class="tab-content">
+  <div class="section" style="margin-top:14px; padding-bottom:28px">
+    <div id="summaryContent"><div class="loader"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<div class="overlay" id="confirmOverlay">
+  <div class="dialog">
+    <div class="dialog-icon">📦</div>
+    <div class="dialog-title">DOSTAWA ZAKOŃCZONA?</div>
+    <div class="dialog-addr" id="dialogAddr"></div>
+    <div class="dialog-btns">
+      <button class="dialog-btn cancel" onclick="closeDialog()">Anuluj</button>
+      <button class="dialog-btn confirm" onclick="confirmDeliver()">✓ Tak, dostarczone!</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+<div class="bottom-checker"></div>
 <div class="toast" id="toast"></div>
 
-<!-- FIREBASE -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
-    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-  import {
-    getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
-    query, where, orderBy, serverTimestamp, Timestamp
-  } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, Timestamp }
+  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBJg0grKacduj-H5mGr82YwMQEfYDpP69g",
-    authDomain: "epicka-dostawa.firebaseapp.com",
-    projectId: "epicka-dostawa",
-    storageBucket: "epicka-dostawa.firebasestorage.app",
-    messagingSenderId: "1082967019384",
-    appId: "1:1082967019384:web:93b6b0b9dd8af16672028d"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyBJg0grKacduj-H5mGr82YwMQEfYDpP69g",
+  authDomain: "epicka-dostawa.firebaseapp.com",
+  projectId: "epicka-dostawa",
+  storageBucket: "epicka-dostawa.firebasestorage.app",
+  messagingSenderId: "1082967019384",
+  appId: "1:1082967019384:web:93b6b0b9dd8af16672028d"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const provider = new GoogleAuthProvider();
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+const provider = new GoogleAuthProvider();
 
-  let currentUser = null;
-  let paymentState = { e: 'Gotówka', t: 'Gotówka' };
-  let paidState = { e: false, t: false };
+const PIZZERIA = "Pizzeria Epicka, Szczecin";
+const API_KEY = "AIzaSyBsJsvj68zxW7s3ilzBzRLdzoda8rvLBgw";
 
-  // ─── AUTH ───
-  window.signInWithGoogle = async () => {
-    try { await signInWithPopup(auth, provider); }
-    catch(e) { showToast('Błąd logowania: ' + e.message); }
-  };
+let currentUser = null;
+let stops = { epicka: [], tajska: [] };
+let payState = { e: 'Gotówka', t: 'Gotówka' };
+let paidState = { e: false, t: false };
+let pendingDeliver = null;
+let dragSrcIdx = null;
+let recognition = null, isListening = false;
+let sessionToken = null, autocompleteService = null;
 
-  window.signOut = async () => {
-    await fbSignOut(auth);
-  };
+const PIN_SVG = `<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>`;
+const CHECK_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+const CLOSE_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`;
+const DRAG_SVG = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>`;
+const EDIT_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 
-  onAuthStateChanged(auth, user => {
-    currentUser = user;
-    if (user) {
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      document.getElementById('user-name').textContent = user.displayName?.split(' ')[0] || 'User';
-      document.getElementById('user-avatar').src = user.photoURL || '';
-      loadOrders('epicka');
-    } else {
-      document.getElementById('auth-screen').style.display = 'flex';
-      document.getElementById('app').style.display = 'none';
+// ─── AUTH ───
+window.signInWithGoogle = async () => { try { await signInWithPopup(auth, provider); } catch(e) { showToast('Błąd logowania'); } };
+window.doSignOut = async () => { await fbSignOut(auth); };
+
+onAuthStateChanged(auth, user => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('userName').textContent = user.displayName?.split(' ')[0] || '';
+    document.getElementById('userAvatar').src = user.photoURL || '';
+    loadGoogleMaps();
+    loadStops('epicka');
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+// ─── PAYMENT ───
+window.setPay = (p, method, btn) => {
+  payState[p] = method;
+  btn.closest('.payment-row').querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+};
+window.togglePaid = (p) => {
+  paidState[p] = !paidState[p];
+  document.getElementById(p+'PaidBtn').classList.toggle('active', paidState[p]);
+  const amtEl = document.getElementById(p+'AmountInput');
+  amtEl.disabled = paidState[p];
+  if (paidState[p]) amtEl.value = '';
+};
+
+// ─── GOOGLE MAPS ───
+function loadGoogleMaps() {
+  if (window.google?.maps) { initAC(); return; }
+  const s = document.createElement('script');
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=initAC&loading=async`;
+  s.async = true; document.head.appendChild(s);
+}
+window.initAC = () => {
+  try { sessionToken = new google.maps.places.AutocompleteSessionToken(); } catch(e) {}
+  if (!google.maps.places.AutocompleteSuggestion) {
+    autocompleteService = new google.maps.places.AutocompleteService();
+  }
+  ['e','t'].forEach(p => {
+    const inputId = p+'AddrInput', suggId = p+'Suggestions';
+    const el = document.getElementById(inputId);
+    let dbt;
+    el.addEventListener('input', () => {
+      clearTimeout(dbt);
+      const v = el.value.trim();
+      if (v.length < 2) { document.getElementById(suggId).style.display='none'; return; }
+      dbt = setTimeout(() => getSugg(v, document.getElementById(suggId)), 300);
+    });
+    el.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); addStop(p==='e'?'epicka':'tajska'); }});
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.input-card')) {
+      document.getElementById('eSuggestions').style.display='none';
+      document.getElementById('tSuggestions').style.display='none';
     }
   });
+};
 
-  // ─── PAYMENT / PAID TOGGLES ───
-  window.setPayment = (prefix, method, btn) => {
-    paymentState[prefix] = method;
-    btn.closest('.payment-methods').querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  };
-
-  window.togglePaid = (prefix) => {
-    paidState[prefix] = !paidState[prefix];
-    const btn = document.getElementById(prefix + '-paid-btn');
-    btn.classList.toggle('active', paidState[prefix]);
-    if (paidState[prefix]) {
-      document.getElementById(prefix + '-kwota').disabled = true;
-      document.getElementById(prefix + '-kwota').value = '';
-    } else {
-      document.getElementById(prefix + '-kwota').disabled = false;
-    }
-  };
-
-  // ─── ADD ORDER ───
-  window.addOrder = async (restauracja) => {
-    if (!currentUser) return;
-    const p = restauracja === 'epicka' ? 'e' : 't';
-    const adres = document.getElementById(p + '-adres').value.trim();
-    if (!adres) { showToast('Wpisz adres!'); return; }
-
-    const kwotaVal = document.getElementById(p + '-kwota').value;
-    const kwota = paidState[p] ? null : (kwotaVal ? parseFloat(kwotaVal) : null);
-    const oplacone = paidState[p] || false;
-
-    const btn = document.querySelector(`#tab-${restauracja} .btn-submit`);
-    btn.disabled = true;
-    btn.textContent = 'Zapisuję...';
-
+async function getSugg(q, suggEl) {
+  if (window.google?.maps?.places?.AutocompleteSuggestion) {
     try {
-      await addDoc(collection(db, 'orders'), {
-        uid: currentUser.uid,
-        restauracja,
-        adres,
-        notatka: document.getElementById(p + '-notatka').value.trim(),
-        platnosc: paymentState[p],
-        kwota,
-        oplacone,
-        createdAt: serverTimestamp()
+      const { suggestions } = await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+        input: q+' Szczecin', sessionToken, includedRegionCodes: ['pl']
       });
-
-      // Reset form
-      document.getElementById(p + '-adres').value = '';
-      document.getElementById(p + '-notatka').value = '';
-      document.getElementById(p + '-kwota').value = '';
-      if (paidState[p]) { paidState[p] = false; document.getElementById(p + '-paid-btn').classList.remove('active'); document.getElementById(p + '-kwota').disabled = false; }
-      paymentState[p] = 'Gotówka';
-      document.querySelectorAll(`#tab-${restauracja} .pay-btn`).forEach((b, i) => b.classList.toggle('active', i === 0));
-
-      showToast('Zamówienie dodane ✓');
-      loadOrders(restauracja);
-    } catch(e) {
-      showToast('Błąd: ' + e.message);
+      renderSugg(suggestions.slice(0,5).map(s => ({
+        main: s.placePrediction.structuredFormat?.mainText?.text || s.placePrediction.text.text,
+        sub: s.placePrediction.structuredFormat?.secondaryText?.text || '',
+        full: s.placePrediction.text.text
+      })), suggEl); return;
+    } catch(e) {}
+  }
+  if (!autocompleteService) return;
+  autocompleteService.getPlacePredictions(
+    { input: q+' Szczecin', sessionToken, componentRestrictions:{country:'pl'}, types:['address'] },
+    (p, s) => {
+      if (s !== google.maps.places.PlacesServiceStatus.OK || !p) { suggEl.style.display='none'; return; }
+      renderSugg(p.slice(0,5).map(pred => ({
+        main: pred.structured_formatting.main_text,
+        sub: pred.structured_formatting.secondary_text||'',
+        full: pred.description
+      })), suggEl);
     }
+  );
+}
 
-    btn.disabled = false;
-    btn.textContent = 'Dodaj zamówienie';
-  };
+function renderSugg(items, suggEl) {
+  if (!items.length) { suggEl.style.display='none'; return; }
+  suggEl.innerHTML = '';
+  items.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'suggestion-item';
+    el.innerHTML = `<span class="sug-pin">${PIN_SVG}</span><div><div class="sug-main">${item.main}</div><div class="sug-sub">${item.sub}</div></div>`;
+    const pick = e => {
+      e.preventDefault();
+      const card = suggEl.closest('.input-card');
+      card.querySelector('.addr-input').value = item.full;
+      suggEl.style.display = 'none';
+      card.querySelector('.note-input').focus();
+    };
+    el.addEventListener('mousedown', pick);
+    el.addEventListener('touchstart', pick);
+    suggEl.appendChild(el);
+  });
+  suggEl.style.display = 'block';
+}
 
-  // ─── LOAD ORDERS ───
-  window.loadOrders = async (restauracja, targetEl) => {
-    if (!currentUser) return;
-    const el = targetEl || document.getElementById(restauracja + '-orders');
-    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-
-    const today = new Date();
-    today.setHours(0,0,0,0);
-
-    try {
-      const q = query(
-        collection(db, 'orders'),
-        where('uid', '==', currentUser.uid),
-        where('restauracja', '==', restauracja),
-        where('createdAt', '>=', Timestamp.fromDate(today)),
-        orderBy('createdAt', 'desc')
-      );
-      const snap = await getDocs(q);
-      renderOrders(snap.docs, el);
-    } catch(e) {
-      el.innerHTML = `<div class="empty"><div>⚠️</div>${e.message}</div>`;
-    }
-  };
-
-  window.loadHistoria = async () => {
-    if (!currentUser) return;
-    const el = document.getElementById('historia-orders');
-    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-
-    try {
-      const q = query(
-        collection(db, 'orders'),
-        where('uid', '==', currentUser.uid),
-        orderBy('createdAt', 'desc')
-      );
-      const snap = await getDocs(q);
-      renderOrders(snap.docs, el, true);
-    } catch(e) {
-      el.innerHTML = `<div class="empty"><div>⚠️</div>${e.message}</div>`;
-    }
-  };
-
-  window.loadPodsumowanie = async () => {
-    if (!currentUser) return;
-    const el = document.getElementById('summary-content');
-    el.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
-
-    try {
-      const q = query(
-        collection(db, 'orders'),
-        where('uid', '==', currentUser.uid),
-        orderBy('createdAt', 'desc')
-      );
-      const snap = await getDocs(q);
-      const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderPodsumowanie(orders, el);
-    } catch(e) {
-      el.innerHTML = `<div class="empty"><div>⚠️</div>${e.message}</div>`;
-    }
-  };
-
-  // ─── RENDER ORDERS ───
-  function renderOrders(docs, el, showDate = false) {
-    if (docs.length === 0) {
-      el.innerHTML = '<div class="empty"><div class="empty-icon">📦</div>Brak zamówień</div>';
-      return;
-    }
-
-    let html = '';
-    let lastDate = '';
-
-    docs.forEach(docSnap => {
-      const o = { id: docSnap.id, ...docSnap.data() };
-      const date = o.createdAt?.toDate ? o.createdAt.toDate() : new Date();
-
-      if (showDate) {
-        const dateStr = date.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
-        if (dateStr !== lastDate) {
-          html += `<div class="date-sep">${dateStr}</div>`;
-          lastDate = dateStr;
-        }
-      }
-
-      const time = date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-      const kwotaStr = o.oplacone ? '<span class="badge badge-oplacone">OPŁACONE</span>' :
-        (o.kwota != null ? `<div class="order-amount">${o.kwota.toFixed(2)} zł</div>` : '');
-      const payBadge = `badge-${o.platnosc?.toLowerCase()}`;
-
-      html += `
-        <div class="order-card" id="card-${o.id}">
-          <div>
-            <div class="order-address">${o.adres}</div>
-            <div class="order-meta">
-              <span class="badge ${payBadge}">${o.platnosc}</span>
-              ${o.oplacone ? '<span class="badge badge-oplacone">OPŁACONE</span>' : ''}
-              <span class="order-time">${time}</span>
-              ${o.restauracja ? `<span class="badge" style="background:#333;color:#999">${o.restauracja}</span>` : ''}
-            </div>
-            ${o.notatka ? `<div class="order-note">${o.notatka}</div>` : ''}
-            <div class="order-actions">
-              <button class="btn-icon" onclick="editOrder('${o.id}')" title="Edytuj">✏️</button>
-              <button class="btn-icon del" onclick="deleteOrder('${o.id}')" title="Usuń">🗑️</button>
-            </div>
-          </div>
-          <div>${!o.oplacone && o.kwota != null ? `<div class="order-amount">${o.kwota.toFixed(2)} zł</div>` : kwotaStr}</div>
-        </div>`;
+// ─── ADD STOP ───
+window.addStop = async (restauracja) => {
+  if (!currentUser) return;
+  const p = restauracja==='epicka'?'e':'t';
+  const addrEl = document.getElementById(p+'AddrInput');
+  const noteEl = document.getElementById(p+'NoteInput');
+  const amtEl = document.getElementById(p+'AmountInput');
+  const addr = addrEl.value.trim();
+  if (!addr) { showToast('Wpisz adres!'); return; }
+  const kwota = paidState[p] ? null : (amtEl.value ? parseFloat(amtEl.value) : null);
+  try {
+    const docRef = await addDoc(collection(db,'stops'), {
+      uid: currentUser.uid, restauracja, address: addr,
+      note: noteEl.value.trim(), platnosc: payState[p],
+      kwota, oplacone: paidState[p], delivered: false, createdAt: serverTimestamp()
     });
+    stops[restauracja].push({
+      id: docRef.id, address: addr, note: noteEl.value.trim(),
+      platnosc: payState[p], kwota, oplacone: paidState[p], delivered: false,
+      time: new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})
+    });
+    addrEl.value=''; noteEl.value=''; amtEl.value='';
+    if (paidState[p]) { paidState[p]=false; document.getElementById(p+'PaidBtn').classList.remove('active'); amtEl.disabled=false; }
+    payState[p]='Gotówka';
+    document.querySelectorAll(`#tab-${restauracja} .pay-btn`).forEach((b,i) => b.classList.toggle('active',i===0));
+    try { sessionToken = new google.maps.places.AutocompleteSessionToken(); } catch(e) {}
+    renderStops(restauracja); showToast('✓ Dodano do trasy');
+  } catch(e) { showToast('Błąd: '+e.message); }
+};
 
-    el.innerHTML = html;
+// ─── LOAD STOPS ───
+async function loadStops(restauracja) {
+  if (!currentUser) return;
+  const today = new Date(); today.setHours(0,0,0,0);
+  try {
+    const q = query(collection(db,'stops'), where('uid','==',currentUser.uid), where('restauracja','==',restauracja), where('createdAt','>=',Timestamp.fromDate(today)), orderBy('createdAt','asc'));
+    const snap = await getDocs(q);
+    stops[restauracja] = snap.docs.map(d => {
+      const dt=d.data(); const date=dt.createdAt?.toDate?dt.createdAt.toDate():new Date();
+      return { id:d.id, ...dt, time:date.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'}) };
+    });
+    renderStops(restauracja);
+  } catch(e) { showToast('Błąd ładowania: '+e.message); }
+}
+
+// ─── RENDER STOPS ───
+function renderStops(restauracja) {
+  const p = restauracja==='epicka'?'e':'t';
+  const list = document.getElementById(p+'StopsList');
+  const arr = stops[restauracja];
+  const active = arr.filter(s=>!s.delivered).length;
+  document.getElementById(p+'StopsTitle').textContent = `PRZYSTANKI (${active} aktywnych)`;
+  document.getElementById(p+'PlanBtn').disabled = active===0;
+  const totalActive = stops.epicka.filter(s=>!s.delivered).length + stops.tajska.filter(s=>!s.delivered).length;
+  document.getElementById('headerCounter').textContent = `${totalActive} PRZYSTANKÓW`;
+
+  if (!arr.length) {
+    list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg><p>Brak adresów.<br>Wpisz adres powyżej<br>i dodaj do trasy.</p></div>`;
+    return;
   }
 
-  // ─── EDIT ORDER ───
-  window.editOrder = async (id) => {
-    const card = document.getElementById('card-' + id);
-    if (!card) return;
-    card.classList.add('editing');
-
-    // Get current data
-    const q = query(collection(db, 'orders'), where('uid', '==', currentUser.uid));
-    const snap = await getDocs(q);
-    const docSnap = snap.docs.find(d => d.id === id);
-    if (!docSnap) return;
-    const o = docSnap.data();
-
-    card.querySelector('.order-actions').innerHTML = `
-      <input type="text" id="edit-adres-${id}" value="${o.adres}" style="margin-right:8px;width:200px">
-      <input type="number" id="edit-kwota-${id}" value="${o.kwota || ''}" placeholder="kwota" style="width:80px;margin-right:8px">
-      <button class="btn-icon" onclick="saveEdit('${id}', '${o.restauracja}')">💾</button>
-      <button class="btn-icon" onclick="cancelEdit('${id}')">✕</button>
-    `;
-  };
-
-  window.saveEdit = async (id, restauracja) => {
-    const adres = document.getElementById('edit-adres-' + id)?.value.trim();
-    const kwotaVal = document.getElementById('edit-kwota-' + id)?.value;
-    const kwota = kwotaVal ? parseFloat(kwotaVal) : null;
-
-    try {
-      await updateDoc(doc(db, 'orders', id), { adres, kwota });
-      showToast('Zapisano ✓');
-      const card = document.getElementById('card-' + id);
-      card?.classList.remove('editing');
-      loadOrders(restauracja);
-    } catch(e) { showToast('Błąd: ' + e.message); }
-  };
-
-  window.cancelEdit = (id) => {
-    const card = document.getElementById('card-' + id);
-    card?.classList.remove('editing');
-    // reload current tab
-    const activeTab = document.querySelector('.tab.active')?.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
-    if (activeTab === 'epicka' || activeTab === 'tajska') loadOrders(activeTab);
-    else if (activeTab === 'historia') loadHistoria();
-  };
-
-  // ─── DELETE ORDER ───
-  window.deleteOrder = async (id) => {
-    if (!confirm('Usunąć to zamówienie?')) return;
-    try {
-      await deleteDoc(doc(db, 'orders', id));
-      showToast('Usunięto');
-      const activeTab = document.querySelector('.tab.active')?.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
-      if (activeTab === 'epicka' || activeTab === 'tajska') loadOrders(activeTab);
-      else if (activeTab === 'historia') loadHistoria();
-    } catch(e) { showToast('Błąd: ' + e.message); }
-  };
-
-  // ─── SUMMARY ───
-  function renderPodsumowanie(orders, el) {
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    const todayOrders = orders.filter(o => o.createdAt?.toDate && o.createdAt.toDate() >= today);
-    const monthOrders = orders.filter(o => o.createdAt?.toDate && o.createdAt.toDate() >= firstOfMonth);
-
-    function calcStats(list) {
-      const stats = { Gotówka: 0, Karta: 0, WOLT: 0, oplacone: 0, total: 0 };
-      list.forEach(o => {
-        if (o.oplacone) { stats.oplacone++; }
-        else if (o.kwota != null) {
-          stats[o.platnosc] = (stats[o.platnosc] || 0) + o.kwota;
-          stats.total += o.kwota;
-        }
-      });
-      return stats;
-    }
-
-    const ds = calcStats(todayOrders);
-    const ms = calcStats(monthOrders);
-
+  list.innerHTML=''; let num=1;
+  arr.forEach((s,i) => {
+    const el = document.createElement('div');
+    el.className = `stop-item${s.delivered?' delivered':''}`;
+    el.dataset.idx = i;
+    const badgeClass = 'badge-'+(s.platnosc||'gotowka').toLowerCase().replace('ó','o');
+    const amountHtml = s.oplacone ? `<span class="stop-badge badge-oplacone">OPŁACONE</span>` : (s.kwota!=null?`<span class="stop-amount">${s.kwota.toFixed(2)} zł</span>`:'');
     el.innerHTML = `
-      <div class="summary-grid">
-        <div class="summary-card">
-          <div class="summary-card-title">📅 Dzisiaj (${todayOrders.length} zamówień)</div>
-          <div class="summary-row"><span class="label">💵 Gotówka</span><span class="value">${ds.Gotówka.toFixed(2)} zł</span></div>
-          <div class="summary-row"><span class="label">💳 Karta</span><span class="value">${ds.Karta.toFixed(2)} zł</span></div>
-          <div class="summary-row"><span class="label">🟠 WOLT</span><span class="value">${ds.WOLT.toFixed(2)} zł</span></div>
-          <div class="summary-row"><span class="label">✅ Opłacone z góry</span><span class="value">${ds.oplacone} szt.</span></div>
-          <div class="summary-total"><span class="label">Razem</span><span class="value">${ds.total.toFixed(2)} zł</span></div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-card-title">📆 Ten miesiąc (${monthOrders.length} zamówień)</div>
-          <div class="summary-row"><span class="label">💵 Gotówka</span><span class="value">${ms.Gotówka.toFixed(2)} zł</span></div>
-          <div class="summary-row"><span class="label">💳 Karta</span><span class="value">${ms.Karta.toFixed(2)} zł</span></div>
-          <div class="summary-row"><span class="label">🟠 WOLT</span><span class="value">${ms.WOLT.toFixed(2)} zł</span></div>
-          <div class="summary-row"><span class="label">✅ Opłacone z góry</span><span class="value">${ms.oplacone} szt.</span></div>
-          <div class="summary-total"><span class="label">Razem</span><span class="value">${ms.total.toFixed(2)} zł</span></div>
+      <div class="drag-handle" data-drag="${i}">${DRAG_SVG}</div>
+      <div class="stop-num">${s.delivered?CHECK_SVG:num}</div>
+      <div class="stop-info" id="info-${s.id}">
+        <div class="stop-address">${s.address}</div>
+        ${s.note?`<div class="stop-note">📝 ${s.note}</div>`:''}
+        <div class="stop-meta">
+          <span class="stop-badge ${badgeClass}">${s.platnosc}</span>
+          ${amountHtml}
+          <span class="stop-time">${s.time}</span>
         </div>
       </div>
-    `;
-  }
+      <div class="stop-actions">
+        ${!s.delivered?`<button class="icon-btn ok-btn" onclick="askDeliver('${s.id}','${restauracja}')">${CHECK_SVG}</button>`:''}
+        <button class="icon-btn" onclick="editStop('${s.id}','${restauracja}')">${EDIT_SVG}</button>
+        <button class="icon-btn" onclick="removeStop('${s.id}','${restauracja}')">${CLOSE_SVG}</button>
+      </div>`;
 
-  // ─── TABS ───
-  window.switchTab = (tab, el) => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    ['epicka','tajska','historia','podsumowanie'].forEach(t => {
-      document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+    el.setAttribute('draggable', s.delivered?'false':'true');
+    el.addEventListener('dragstart', e => { dragSrcIdx=i; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    el.addEventListener('dragover', e => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); });
+    el.addEventListener('dragleave', e => e.currentTarget.classList.remove('drag-over'));
+    el.addEventListener('drop', e => {
+      e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+      const dest=parseInt(e.currentTarget.dataset.idx);
+      if (dragSrcIdx===null||dragSrcIdx===dest) return;
+      const moved=stops[restauracja].splice(dragSrcIdx,1)[0];
+      stops[restauracja].splice(dest,0,moved);
+      renderStops(restauracja);
     });
-    if (tab === 'historia') loadHistoria();
-    else if (tab === 'podsumowanie') loadPodsumowanie();
-    else loadOrders(tab);
-  };
+    el.addEventListener('dragend', e => { e.currentTarget.classList.remove('dragging'); dragSrcIdx=null; });
 
-  // ─── TOAST ───
-  window.showToast = (msg) => {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
-  };
+    list.appendChild(el);
+    if (!s.delivered) num++;
+  });
+}
+
+// ─── DELIVER ───
+window.askDeliver = (id, restauracja) => {
+  const s = stops[restauracja].find(s=>s.id===id);
+  if (!s) return;
+  pendingDeliver={id,restauracja};
+  document.getElementById('dialogAddr').textContent=s.address;
+  document.getElementById('confirmOverlay').classList.add('show');
+};
+window.closeDialog = () => { pendingDeliver=null; document.getElementById('confirmOverlay').classList.remove('show'); };
+window.confirmDeliver = async () => {
+  if (!pendingDeliver) return;
+  const {id,restauracja}=pendingDeliver; closeDialog();
+  const idx=stops[restauracja].findIndex(s=>s.id===id);
+  if (idx===-1) return;
+  stops[restauracja][idx].delivered=true;
+  try { await updateDoc(doc(db,'stops',id),{delivered:true}); } catch(e){}
+  renderStops(restauracja);
+  const allDone=[...stops.epicka,...stops.tajska].every(s=>s.delivered);
+  if (allDone){showToast('🎉 Wszystkie dostawy zrealizowane!');launchConfetti();}
+  else showToast('✓ Dostarczone!');
+};
+document.getElementById('confirmOverlay').addEventListener('click', e => { if (e.target===document.getElementById('confirmOverlay')) closeDialog(); });
+
+// ─── EDIT STOP ───
+window.editStop = (id, restauracja) => {
+  const s=stops[restauracja].find(s=>s.id===id); if(!s) return;
+  const infoEl=document.getElementById('info-'+id); if(!infoEl) return;
+  infoEl.innerHTML=`<div class="edit-row">
+    <input class="edit-input" id="ea-${id}" value="${s.address}" placeholder="Adres">
+    <input class="edit-input" id="ek-${id}" type="number" value="${s.kwota||''}" placeholder="Kwota" style="max-width:90px">
+    <button class="save-btn" onclick="saveEdit('${id}','${restauracja}')">💾 Zapisz</button>
+  </div>`;
+};
+window.saveEdit = async (id, restauracja) => {
+  const addr=document.getElementById('ea-'+id)?.value.trim();
+  const kwotaVal=document.getElementById('ek-'+id)?.value;
+  const kwota=kwotaVal?parseFloat(kwotaVal):null;
+  try {
+    await updateDoc(doc(db,'stops',id),{address:addr,kwota});
+    const idx=stops[restauracja].findIndex(s=>s.id===id);
+    if(idx!==-1){stops[restauracja][idx].address=addr;stops[restauracja][idx].kwota=kwota;}
+    showToast('Zapisano ✓'); renderStops(restauracja);
+  } catch(e){showToast('Błąd: '+e.message);}
+};
+
+// ─── REMOVE STOP ───
+window.removeStop = async (id, restauracja) => {
+  try {
+    await deleteDoc(doc(db,'stops',id));
+    stops[restauracja]=stops[restauracja].filter(s=>s.id!==id);
+    renderStops(restauracja); showToast('Usunięto');
+  } catch(e){showToast('Błąd: '+e.message);}
+};
+
+// ─── PLAN ROUTE ───
+window.planRoute = (restauracja) => {
+  const active=stops[restauracja].filter(s=>!s.delivered);
+  if (!active.length){showToast('Brak aktywnych przystanków!');return;}
+  if (active.length===1){openMaps(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(PIZZERIA)}&destination=${encodeURIComponent(active[0].address)}&travelmode=driving`);return;}
+  showToast('⏳ Obliczam optymalną trasę...');
+  const ds=new google.maps.DirectionsService();
+  ds.route({
+    origin:PIZZERIA, destination:active[active.length-1].address,
+    waypoints:active.slice(0,-1).map(s=>({location:s.address,stopover:true})),
+    optimizeWaypoints:true, travelMode:google.maps.TravelMode.DRIVING
+  },(result,status)=>{
+    if (status==='OK'&&result.routes[0]){
+      const order=result.routes[0].waypoint_order;
+      const sorted=[...order.map(i=>active[i]),active[active.length-1]];
+      const origin=encodeURIComponent(PIZZERIA);
+      const dest=encodeURIComponent(sorted[sorted.length-1].address);
+      const waypts=sorted.slice(0,-1).map(s=>encodeURIComponent(s.address)).join('%7C');
+      openMaps(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${waypts}&travelmode=driving`);
+    } else {
+      const origin=encodeURIComponent(PIZZERIA);
+      const waypts=active.map(s=>encodeURIComponent(s.address)).join('%7C');
+      openMaps(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${origin}&waypoints=${waypts}&travelmode=driving&optimize=true`);
+    }
+  });
+};
+function openMaps(webUrl) {
+  const nativeUrl=webUrl.replace('https://www.google.com/maps','comgooglemaps://');
+  const w=window.open(nativeUrl,'_blank');
+  setTimeout(()=>{try{if(!w||w.closed)window.open(webUrl,'_blank');}catch(e){window.open(webUrl,'_blank');}},500);
+}
+
+// ─── TABS ───
+window.switchTab = (tab, btn) => {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  if (tab==='epicka') loadStops('epicka');
+  else if (tab==='tajska') loadStops('tajska');
+  else if (tab==='historia') loadHistoria('epicka');
+  else if (tab==='podsumowanie') loadPodsumowanie();
+};
+window.switchSubTab = (tab, btn) => {
+  btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('subtab-epicka-h').style.display=tab==='epicka-h'?'block':'none';
+  document.getElementById('subtab-tajska-h').style.display=tab==='tajska-h'?'block':'none';
+  if (tab==='epicka-h') loadHistoria('epicka'); else loadHistoria('tajska');
+};
+
+// ─── HISTORIA ───
+async function loadHistoria(restauracja) {
+  const el=document.getElementById('subtab-'+restauracja+'-h');
+  el.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  try {
+    const q=query(collection(db,'stops'),where('uid','==',currentUser.uid),where('restauracja','==',restauracja),orderBy('createdAt','desc'));
+    const snap=await getDocs(q);
+    if (!snap.docs.length){el.innerHTML='<div class="no-history">Brak historii</div>';return;}
+    const items=snap.docs.map(d=>{const dt=d.data();const date=dt.createdAt?.toDate?dt.createdAt.toDate():new Date();return{...dt,id:d.id,dateStr:date.toLocaleDateString('pl-PL',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),timeStr:date.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})};});
+    const grouped={};
+    items.forEach(i=>{if(!grouped[i.dateStr])grouped[i.dateStr]=[];grouped[i.dateStr].push(i);});
+    el.innerHTML=Object.entries(grouped).map(([date,list])=>`
+      <div class="history-item">
+        <div class="history-header"><div>
+          <div class="history-date">${date}</div>
+          <div class="history-count">${list.length}</div>
+          <div class="history-label">dostaw</div>
+        </div></div>
+        <div class="history-addrs">${list.map(i=>`${i.delivered?'✓':'📍'} ${i.address}${i.note?' ('+i.note+')':''} — <b>${i.platnosc}</b>${i.oplacone?' [OPŁACONE]':i.kwota!=null?' '+i.kwota.toFixed(2)+' zł':''} (${i.timeStr})`).join('<br>')}</div>
+      </div>`).join('');
+  } catch(e){el.innerHTML=`<div class="no-history">${e.message}</div>`;}
+}
+
+// ─── PODSUMOWANIE ───
+async function loadPodsumowanie() {
+  const el=document.getElementById('summaryContent');
+  el.innerHTML='<div class="loader"><div class="spinner"></div></div>';
+  try {
+    const q=query(collection(db,'stops'),where('uid','==',currentUser.uid),orderBy('createdAt','desc'));
+    const snap=await getDocs(q);
+    const all=snap.docs.map(d=>{const dt=d.data();const date=dt.createdAt?.toDate?dt.createdAt.toDate():new Date();return{...dt,date};});
+    const today=new Date();today.setHours(0,0,0,0);
+    const firstMonth=new Date(today.getFullYear(),today.getMonth(),1);
+    function statsCard(title,list){
+      const s={Gotówka:0,Karta:0,WOLT:0,oplacone:0,total:0};
+      list.forEach(o=>{if(o.oplacone){s.oplacone++;}else if(o.kwota!=null){s[o.platnosc]=(s[o.platnosc]||0)+o.kwota;s.total+=o.kwota;}});
+      return `<div class="summary-card">
+        <div class="summary-card-title">${title} — ${list.length} dostaw</div>
+        <div class="summary-row"><span class="s-label">💵 Gotówka</span><span class="s-val">${s.Gotówka.toFixed(2)} zł</span></div>
+        <div class="summary-row"><span class="s-label">💳 Karta</span><span class="s-val">${s.Karta.toFixed(2)} zł</span></div>
+        <div class="summary-row"><span class="s-label">🟠 WOLT</span><span class="s-val">${s.WOLT.toFixed(2)} zł</span></div>
+        <div class="summary-row"><span class="s-label">✅ Opłacone z góry</span><span class="s-val">${s.oplacone} szt.</span></div>
+        <div class="summary-total-row"><span class="s-label">RAZEM</span><span class="s-val">${s.total.toFixed(2)} ZŁ</span></div>
+      </div>`;
+    }
+    const tE=all.filter(o=>o.date>=today&&o.restauracja==='epicka');
+    const tT=all.filter(o=>o.date>=today&&o.restauracja==='tajska');
+    const mE=all.filter(o=>o.date>=firstMonth&&o.restauracja==='epicka');
+    const mT=all.filter(o=>o.date>=firstMonth&&o.restauracja==='tajska');
+    el.innerHTML=`
+      <div class="section-title" style="margin-bottom:10px">📅 DZISIAJ</div>
+      ${statsCard('🍕 Epicka',tE)}${statsCard('🍜 Tajska',tT)}
+      <div class="section-title" style="margin:14px 0 10px">📆 TEN MIESIĄC</div>
+      ${statsCard('🍕 Epicka',mE)}${statsCard('🍜 Tajska',mT)}`;
+  } catch(e){el.innerHTML=`<div class="no-history">${e.message}</div>`;}
+}
+
+// ─── VOICE ───
+window.toggleVoice = (p) => {
+  if (!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){showToast('Niedostępne w tej przeglądarce');return;}
+  if (isListening){recognition.stop();return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR();recognition.lang='pl-PL';recognition.continuous=false;recognition.interimResults=false;
+  const inputId=p+'AddrInput',micId=p+'MicBtn',suggId=p+'Suggestions';
+  recognition.onstart=()=>{isListening=true;document.getElementById(micId).classList.add('listening');showToast('🎤 Słucham...');};
+  recognition.onresult=e=>{const v=e.results[0][0].transcript;document.getElementById(inputId).value=v;getSugg(v,document.getElementById(suggId));};
+  recognition.onend=()=>{isListening=false;document.getElementById(micId).classList.remove('listening');};
+  recognition.onerror=()=>{isListening=false;document.getElementById(micId).classList.remove('listening');};
+  recognition.start();
+};
+
+// ─── TOAST ───
+let toastTimer;
+window.showToast = (msg) => {
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+};
+
+// ─── CONFETTI ───
+function launchConfetti(){
+  const canvas=document.getElementById('confetti-canvas');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const ctx=canvas.getContext('2d');const pieces=[];
+  const colors=['#E8231A','#2a7a4a','#f1c40f','#3498db','#e67e22','#9b59b6'];
+  for(let i=0;i<120;i++){pieces.push({x:Math.random()*canvas.width,y:-20,w:Math.random()*10+5,h:Math.random()*6+3,color:colors[Math.floor(Math.random()*colors.length)],vx:(Math.random()-.5)*4,vy:Math.random()*4+2,rot:Math.random()*360,vr:(Math.random()-.5)*6});}
+  let frame=0;
+  function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);pieces.forEach(p=>{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.vy+=.05;});frame++;if(frame<180)requestAnimationFrame(draw);else ctx.clearRect(0,0,canvas.width,canvas.height);}
+  draw();
+}
 </script>
 </body>
 </html>
