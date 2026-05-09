@@ -16,6 +16,21 @@
     --red: #E8231A; --cream: #EDE8DF; --cream-dark: #E0D9CE; --border: #D4CBB8;
     --text: #1a1a1a; --muted: #8a7f72; --green: #2a7a4a; --card-bg: #F5F1EA; --active-tab: #5C4A3A;
   }
+  body.dark {
+    --cream: #0f0f0f; --cream-dark: #1a1a1a; --border: #2e2e2e;
+    --text: #f0f0f0; --muted: #888; --green: #22c55e; --card-bg: #181818; --active-tab: #f0f0f0;
+  }
+  body.dark .checker, body.dark .bottom-checker {
+    background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, #1a1a1a 10px, #1a1a1a 20px);
+  }
+  body.dark header { background: #0f0f0f; }
+  body.dark .tabs { background: #1a1a1a; }
+  body.dark .addr-input, body.dark .note-input, body.dark .amount-input,
+  body.dark .pay-btn, body.dark .paid-btn, body.dark .edit-input { background: #222; color: #f0f0f0; }
+  body.dark select option { background: #222; }
+  body.dark .auth-card { background: #181818; }
+  body.dark .settings-panel { background: #181818; }
+  body.dark .settings-overlay { background: rgba(0,0,0,0.7); }
   body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; }
   .checker { height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
   header { background: var(--cream); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 0 var(--border); }
@@ -158,6 +173,40 @@
   .loader { display: flex; align-items: center; justify-content: center; padding: 32px; }
   .spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--red); border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Settings */
+  .gear-btn { background: none; border: 1.5px solid var(--border); border-radius: 6px; color: var(--muted); width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.2s, color 0.2s; }
+  .gear-btn:hover { border-color: var(--red); color: var(--red); }
+  .gear-btn svg { width: 16px; height: 16px; fill: currentColor; }
+  .settings-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 600; display: none; align-items: flex-end; justify-content: center; }
+  .settings-overlay.show { display: flex; }
+  .settings-panel { background: var(--cream); border-radius: 16px 16px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 480px; }
+  .settings-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; color: var(--text); }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row-label { font-size: 14px; font-weight: 600; color: var(--text); }
+  .settings-row-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 24px; cursor: pointer; transition: background 0.2s; }
+  .toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform 0.2s; }
+  .toggle input:checked + .toggle-slider { background: var(--red); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+  /* Stay logged in dialog */
+  .stay-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 700; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .stay-overlay.show { display: flex; }
+  .stay-dialog { background: var(--cream); border-radius: 12px; padding: 24px 20px; width: 100%; max-width: 340px; }
+  .stay-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; letter-spacing: 1px; margin-bottom: 8px; color: var(--text); }
+  .stay-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .stay-check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+  .stay-check-row input { width: 16px; height: 16px; accent-color: var(--red); cursor: pointer; }
+  .stay-check-row label { font-size: 13px; color: var(--muted); cursor: pointer; }
+  .stay-btns { display: flex; gap: 10px; }
+  .stay-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 900; letter-spacing: 1px; cursor: pointer; }
+  .stay-btn.no { background: var(--cream-dark); color: var(--text); border: 2px solid var(--border); }
+  .stay-btn.yes { background: var(--red); color: white; }
+  .stay-btn:active { opacity: 0.85; }
 </style>
 </head>
 <body>
@@ -321,6 +370,49 @@
 </div>
 </div>
 
+<!-- SETTINGS PANEL -->
+<div class="settings-overlay" id="settingsOverlay" onclick="closeSettings(event)">
+  <div class="settings-panel">
+    <div class="settings-title">⚙️ Ustawienia</div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">🌙 Dark mode</div>
+        <div class="settings-row-sub">Ciemny motyw z czerwonym akcentem</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">🔐 Pozostań zalogowany</div>
+        <div class="settings-row-sub">Nie wylogowuj przy zamknięciu aplikacji</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="stayLoggedToggle" onchange="toggleStayLogged(this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- STAY LOGGED IN DIALOG -->
+<div class="stay-overlay" id="stayOverlay">
+  <div class="stay-dialog">
+    <div class="stay-title">Pozostać zalogowanym?</div>
+    <div class="stay-sub">Czy chcesz żeby aplikacja pamiętała Twoje logowanie przy następnym uruchomieniu?</div>
+    <div class="stay-check-row">
+      <input type="checkbox" id="dontAskAgain">
+      <label for="dontAskAgain">Nie pytaj więcej</label>
+    </div>
+    <div class="stay-btns">
+      <button class="stay-btn no" onclick="answerStay(false)">Nie</button>
+      <button class="stay-btn yes" onclick="answerStay(true)">Tak, zostań</button>
+    </div>
+  </div>
+</div>
+
 <canvas id="confetti-canvas"></canvas>
 <div class="bottom-checker"></div>
 <div class="toast" id="toast"></div>
@@ -370,6 +462,15 @@ const EDIT_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentC
 window.signInWithGoogle = async () => { try { await signInWithPopup(auth, provider); } catch(e) { showToast('Błąd logowania'); } };
 window.doSignOut = async () => { await fbSignOut(auth); };
 
+// Set persistence based on saved pref BEFORE signing in
+import("https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js").then(m => {
+  window._authModule = m;
+  const pref = localStorage.getItem('epStayLogged');
+  const persistence = pref === '0' ? m.browserSessionPersistence : m.browserLocalPersistence;
+  m.setPersistence(auth, persistence);
+});
+
+let _firstLogin = true;
 onAuthStateChanged(auth, user => {
   currentUser = user;
   if (user) {
@@ -379,6 +480,14 @@ onAuthStateChanged(auth, user => {
     document.getElementById('userAvatar').src = user.photoURL || '';
     loadGoogleMaps();
     loadStops('epicka');
+    if (_firstLogin) {
+      _firstLogin = false;
+      // Show stay dialog only if pref not set and dontAsk not set
+      const pref = localStorage.getItem('epStayLogged');
+      if (pref === null && !getDontAsk()) {
+        setTimeout(showStayDialog, 800);
+      }
+    }
   } else {
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
@@ -779,6 +888,71 @@ function launchConfetti(){
   function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);pieces.forEach(p=>{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.fillStyle=p.color;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.vy+=.05;});frame++;if(frame<180)requestAnimationFrame(draw);else ctx.clearRect(0,0,canvas.width,canvas.height);}
   draw();
 }
+
+// ─── DARK MODE ───
+function applyDarkMode(dark) {
+  document.body.classList.toggle('dark', dark);
+  const toggle = document.getElementById('darkModeToggle');
+  if (toggle) toggle.checked = dark;
+}
+window.toggleDarkMode = (val) => {
+  localStorage.setItem('epDarkMode', val ? '1' : '0');
+  applyDarkMode(val);
+};
+
+// ─── STAY LOGGED IN ───
+function getStayPref() { return localStorage.getItem('epStayLogged'); } // null | '1' | '0'
+function getDontAsk() { return localStorage.getItem('epDontAskStay') === '1'; }
+
+window.openSettings = () => {
+  const overlay = document.getElementById('settingsOverlay');
+  overlay.classList.add('show');
+  document.getElementById('stayLoggedToggle').checked = getStayPref() === '1';
+  document.getElementById('darkModeToggle').checked = document.body.classList.contains('dark');
+};
+window.closeSettings = (e) => {
+  if (e.target === document.getElementById('settingsOverlay')) {
+    document.getElementById('settingsOverlay').classList.remove('show');
+  }
+};
+window.toggleStayLogged = (val) => {
+  localStorage.setItem('epStayLogged', val ? '1' : '0');
+  if (!val) {
+    // set firebase persistence to session
+    import("https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js").then(m => {
+      m.setPersistence(auth, m.browserSessionPersistence);
+    });
+  } else {
+    import("https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js").then(m => {
+      m.setPersistence(auth, m.browserLocalPersistence);
+    });
+  }
+};
+
+window.answerStay = (yes) => {
+  const dontAsk = document.getElementById('dontAskAgain').checked;
+  if (dontAsk) localStorage.setItem('epDontAskStay', '1');
+  localStorage.setItem('epStayLogged', yes ? '1' : '0');
+  document.getElementById('stayOverlay').classList.remove('show');
+  // Apply persistence
+  const { setPersistence, browserLocalPersistence, browserSessionPersistence } = window._authModule || {};
+  if (setPersistence) {
+    setPersistence(auth, yes ? browserLocalPersistence : browserSessionPersistence);
+  }
+};
+
+function showStayDialog() {
+  if (getDontAsk()) return;
+  document.getElementById('stayOverlay').classList.add('show');
+}
+
+// ─── INIT ON LOAD ───
+// Apply dark mode from storage
+const savedDark = localStorage.getItem('epDarkMode');
+if (savedDark === '1') applyDarkMode(true);
+
+// Override onAuthStateChanged to show stay dialog on first login
+const _origAuth = onAuthStateChanged;
 </script>
 </body>
 </html>
