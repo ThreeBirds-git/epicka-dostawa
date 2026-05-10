@@ -230,6 +230,20 @@
   .toggle input:checked + .toggle-slider { background: var(--red); }
   .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
 
+  /* Admin panel */
+  .admin-code-row { display: flex; gap: 8px; margin-top: 8px; }
+  .admin-input { flex: 1; background: var(--cream-dark); border: 2px solid var(--border); border-radius: 6px; padding: 9px 12px; font-family: 'Barlow', sans-serif; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.2s; }
+  .admin-input:focus { border-color: var(--red); }
+  .admin-submit { background: var(--red); border: none; border-radius: 6px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; padding: 9px 16px; cursor: pointer; letter-spacing: 1px; white-space: nowrap; }
+  .admin-submit:active { opacity: 0.8; }
+  .admin-badge { display: inline-block; background: var(--red); color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; padding: 3px 8px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+
+  /* Admin history extras */
+  .hist-date-filter { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .hist-date-input { background: var(--card-bg); border: 2px solid var(--border); border-radius: 6px; padding: 7px 10px; font-family: 'Barlow', sans-serif; font-size: 13px; color: var(--text); outline: none; }
+  .hist-date-input:focus { border-color: var(--red); }
+  .hist-date-btn { background: var(--red); border: none; border-radius: 6px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; padding: 8px 14px; cursor: pointer; letter-spacing: 1px; }
+
   /* Stay logged in dialog */
   .stay-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 700; display: none; align-items: center; justify-content: center; padding: 20px; }
   .stay-overlay.show { display: flex; }
@@ -442,6 +456,23 @@
         <input type="checkbox" id="stayLoggedToggle" onchange="toggleStayLogged(this.checked)">
         <span class="toggle-slider"></span>
       </label>
+    </div>
+    <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div>
+        <div class="settings-row-label">🛡️ Tryb admina <span id="adminBadge" style="display:none" class="admin-badge">AKTYWNY</span></div>
+        <div class="settings-row-sub" id="adminStatusText">Wpisz kod dostępu żeby odblokować</div>
+      </div>
+      <div class="admin-code-row" id="adminCodeRow">
+        <input class="admin-input" id="adminCodeInput" type="password" placeholder="Kod dostępu" onkeydown="if(event.key==='Enter')checkAdminCode()">
+        <button class="admin-submit" onclick="checkAdminCode()">Odblokuj</button>
+      </div>
+      <div class="admin-code-row" id="adminPassRow" style="display:none">
+        <input class="admin-input" id="adminPassInput" type="password" placeholder="Hasło admina" onkeydown="if(event.key==='Enter')checkAdminPass()">
+        <button class="admin-submit" onclick="checkAdminPass()">Zaloguj</button>
+      </div>
+      <div id="adminDeactivateRow" style="display:none">
+        <button class="admin-submit" style="background:var(--muted)" onclick="deactivateAdmin()">Wyloguj z trybu admina</button>
+      </div>
     </div>
   </div>
 </div>
@@ -909,11 +940,10 @@ window.switchHistRest = (r, btn) => {
 async function loadHistoriaData() {
   if (!currentUser) return [];
   try {
-    // Only filter by uid — no orderBy to avoid index requirement
-    const q = query(
-      collection(db,'stops'),
-      where('uid','==',currentUser.uid)
-    );
+    // Admin sees all, regular user sees only own
+    const q = isAdmin
+      ? query(collection(db,'stops'))
+      : query(collection(db,'stops'), where('uid','==',currentUser.uid));
     const snap = await getDocs(q);
     return snap.docs
       .map(d => {
@@ -928,6 +958,26 @@ async function loadHistoriaData() {
   } catch(e) { console.error('loadHistoriaData error:', e); return []; }
 }
 
+// Admin custom date range
+let adminDateFrom = null, adminDateTo = null;
+
+window.applyAdminDateFilter = () => {
+  const from = document.getElementById('adminDateFrom')?.value;
+  const to = document.getElementById('adminDateTo')?.value;
+  if (from) adminDateFrom = new Date(from);
+  if (to) { adminDateTo = new Date(to); adminDateTo.setHours(23,59,59,999); }
+  _histCache = null;
+  renderHistoria();
+};
+
+window.clearAdminDateFilter = () => {
+  adminDateFrom = null; adminDateTo = null;
+  if (document.getElementById('adminDateFrom')) document.getElementById('adminDateFrom').value = '';
+  if (document.getElementById('adminDateTo')) document.getElementById('adminDateTo').value = '';
+  _histCache = null;
+  renderHistoria();
+};
+
 async function renderHistoria() {
   const summaryEl = document.getElementById('hist-summary-box');
   const daysEl = document.getElementById('hist-days-list');
@@ -940,12 +990,39 @@ async function renderHistoria() {
   document.getElementById('histNavLabel').textContent = formatHistLabel();
   document.getElementById('histNextBtn').disabled = histOffset >= 0;
 
+  // Admin date filter UI
+  const existingFilter = document.getElementById('adminDateFilterRow');
+  if (isAdmin && !existingFilter) {
+    const nav = document.querySelector('.hist-nav');
+    if (nav) {
+      const filterDiv = document.createElement('div');
+      filterDiv.id = 'adminDateFilterRow';
+      filterDiv.className = 'hist-date-filter';
+      filterDiv.innerHTML = `
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase">Admin — filtr daty:</span>
+        <input class="hist-date-input" type="date" id="adminDateFrom" placeholder="Od">
+        <input class="hist-date-input" type="date" id="adminDateTo" placeholder="Do">
+        <button class="hist-date-btn" onclick="applyAdminDateFilter()">Zastosuj</button>
+        <button class="hist-date-btn" style="background:var(--muted)" onclick="clearAdminDateFilter()">Wyczyść</button>
+      `;
+      nav.after(filterDiv);
+    }
+  } else if (!isAdmin && existingFilter) {
+    existingFilter.remove();
+  }
+
   // Load data (cached per session)
   if (!_histCache) {
     _histCache = await loadHistoriaData();
   }
 
-  const { start, end } = getHistRange();
+  let start, end;
+  if (isAdmin && adminDateFrom) {
+    start = adminDateFrom;
+    end = adminDateTo || new Date(8640000000000000);
+  } else {
+    ({ start, end } = getHistRange());
+  }
   let items = _histCache.filter(d => d._date >= start && d._date <= end);
   if (histRestauracja !== 'all') items = items.filter(d => d.restauracja === histRestauracja);
 
@@ -1034,7 +1111,7 @@ async function loadPodsumowanie() {
   const el=document.getElementById('summaryContent');
   el.innerHTML='<div class="loader"><div class="spinner"></div></div>';
   try {
-    const q=query(collection(db,'stops'),where('uid','==',currentUser.uid),orderBy('createdAt','desc'));
+    const q=query(collection(db,'stops'),where('uid','==',currentUser.uid));
     const snap=await getDocs(q);
     const all=snap.docs
       .map(d=>{const dt=d.data();const date=dt.deliveredAt?new Date(dt.deliveredAt):(dt.createdAt?.toDate?dt.createdAt.toDate():new Date());return{...dt,date};})
@@ -1084,6 +1161,72 @@ let toastTimer;
 window.showToast = (msg) => {
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+};
+
+// ─── ADMIN MODE ───
+const ADMIN_UID = 'XHIMMd5njmSbjYP7tSyMfe5MDDT2';
+const ADMIN_CODE = '192837465';
+const ADMIN_PASS = 'cukiereczkiciasteczka';
+let isAdmin = false;
+
+function updateAdminUI() {
+  const badge = document.getElementById('adminBadge');
+  const statusText = document.getElementById('adminStatusText');
+  const codeRow = document.getElementById('adminCodeRow');
+  const passRow = document.getElementById('adminPassRow');
+  const deactivateRow = document.getElementById('adminDeactivateRow');
+  if (!badge) return;
+  if (isAdmin) {
+    badge.style.display = 'inline-block';
+    statusText.textContent = 'Tryb admina aktywny — widzisz dane wszystkich dostawców';
+    codeRow.style.display = 'none';
+    passRow.style.display = 'none';
+    deactivateRow.style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+    statusText.textContent = 'Wpisz kod dostępu żeby odblokować';
+    codeRow.style.display = 'flex';
+    passRow.style.display = 'none';
+    deactivateRow.style.display = 'none';
+  }
+}
+
+window.checkAdminCode = () => {
+  const val = document.getElementById('adminCodeInput').value.trim();
+  if (val === ADMIN_CODE) {
+    document.getElementById('adminCodeRow').style.display = 'none';
+    document.getElementById('adminPassRow').style.display = 'flex';
+    document.getElementById('adminStatusText').textContent = 'Wpisz hasło admina';
+    document.getElementById('adminCodeInput').value = '';
+    document.getElementById('adminPassInput').focus();
+  } else {
+    showToast('Nieprawidłowy kod');
+    document.getElementById('adminCodeInput').value = '';
+  }
+};
+
+window.checkAdminPass = () => {
+  const val = document.getElementById('adminPassInput').value;
+  if (val === ADMIN_PASS) {
+    isAdmin = true;
+    document.getElementById('adminPassInput').value = '';
+    updateAdminUI();
+    showToast('✓ Tryb admina aktywny');
+    document.getElementById('settingsOverlay').classList.remove('show');
+    _histCache = null;
+    renderHistoria();
+  } else {
+    showToast('Nieprawidłowe hasło');
+    document.getElementById('adminPassInput').value = '';
+  }
+};
+
+window.deactivateAdmin = () => {
+  isAdmin = false;
+  updateAdminUI();
+  showToast('Wylogowano z trybu admina');
+  _histCache = null;
+  renderHistoria();
 };
 
 // ─── CONFETTI ───
