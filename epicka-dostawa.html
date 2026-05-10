@@ -909,28 +909,24 @@ window.switchHistRest = (r, btn) => {
 async function loadHistoriaData() {
   if (!currentUser) return [];
   try {
+    // Simple query — no composite index needed
     const q = query(
       collection(db,'stops'),
       where('uid','==',currentUser.uid),
-      where('delivered','==',true),
-      orderBy('deliveredAt','desc')
+      orderBy('createdAt','desc')
     );
     const snap = await getDocs(q);
-    return snap.docs.map(d => {
-      const dt = d.data();
-      const date = dt.deliveredAt ? new Date(dt.deliveredAt) : (dt.createdAt?.toDate ? dt.createdAt.toDate() : new Date());
-      return { ...dt, id: d.id, _date: date };
-    });
-  } catch(e) {
-    // Fallback: query without delivered filter (index may not exist yet)
-    try {
-      const q2 = query(collection(db,'stops'), where('uid','==',currentUser.uid), orderBy('createdAt','desc'));
-      const snap2 = await getDocs(q2);
-      return snap2.docs
-        .map(d => { const dt=d.data(); const date=dt.deliveredAt?new Date(dt.deliveredAt):(dt.createdAt?.toDate?dt.createdAt.toDate():new Date()); return {...dt,id:d.id,_date:date}; })
-        .filter(d => d.delivered === true);
-    } catch(e2) { return []; }
-  }
+    return snap.docs
+      .map(d => {
+        const dt = d.data();
+        // Use deliveredAt if exists, fallback to createdAt
+        const date = dt.deliveredAt
+          ? new Date(dt.deliveredAt)
+          : (dt.createdAt?.toDate ? dt.createdAt.toDate() : new Date());
+        return { ...dt, id: d.id, _date: date };
+      })
+      .filter(d => d.delivered === true);
+  } catch(e) { return []; }
 }
 
 async function renderHistoria() {
@@ -1041,7 +1037,9 @@ async function loadPodsumowanie() {
   try {
     const q=query(collection(db,'stops'),where('uid','==',currentUser.uid),orderBy('createdAt','desc'));
     const snap=await getDocs(q);
-    const all=snap.docs.map(d=>{const dt=d.data();const date=dt.createdAt?.toDate?dt.createdAt.toDate():new Date();return{...dt,date};});
+    const all=snap.docs
+      .map(d=>{const dt=d.data();const date=dt.deliveredAt?new Date(dt.deliveredAt):(dt.createdAt?.toDate?dt.createdAt.toDate():new Date());return{...dt,date};})
+      .filter(d=>d.delivered===true);
     const today=new Date();today.setHours(0,0,0,0);
     const firstMonth=new Date(today.getFullYear(),today.getMonth(),1);
     function statsCard(title,list){
