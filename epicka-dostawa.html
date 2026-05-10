@@ -125,13 +125,50 @@
   .sub-tabs { display: flex; background: var(--cream-dark); border: 2px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
   .sub-tab { flex: 1; padding: 9px; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; }
   .sub-tab.active { background: var(--active-tab); color: white; }
-  .history-item { background: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; position: relative; overflow: hidden; }
-  .history-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--red); }
-  .history-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-  .history-date { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-  .history-count { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--red); line-height: 1; }
-  .history-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 6px; }
-  .history-addrs { font-size: 12px; color: var(--muted); line-height: 1.9; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 6px; }
+  /* History navigation */
+  .hist-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
+  .hist-nav-btn { background: var(--card-bg); border: 2px solid var(--border); border-radius: 6px; color: var(--text); width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: border-color 0.2s; }
+  .hist-nav-btn:hover { border-color: var(--red); }
+  .hist-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .hist-nav-label { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text); text-align: center; flex: 1; }
+  .hist-period-toggle { display: flex; background: var(--cream-dark); border: 2px solid var(--border); border-radius: 6px; overflow: hidden; flex-shrink: 0; }
+  .hist-period-btn { padding: 6px 12px; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
+  .hist-period-btn.active { background: var(--active-tab); color: white; }
+  .hist-summary { background: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; }
+  .hist-summary-title { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .hist-summary-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .hist-summary-row:last-child { border-bottom: none; }
+  .hist-summary-row .hs-label { color: var(--muted); }
+  .hist-summary-row .hs-val { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 900; color: var(--text); }
+  .hist-summary-total { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 2px solid var(--border); }
+  .hist-summary-total .hs-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
+  .hist-summary-total .hs-val { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 900; color: var(--red); }
+  /* Day cards */
+  .history-day { background: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden; position: relative; }
+  .history-day::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--red); }
+  .history-day-header { display: flex; align-items: center; justify-content: space-between; padding: 11px 12px 11px 16px; cursor: pointer; gap: 8px; }
+  .history-day-left { flex: 1; }
+  .history-date { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .history-day-meta { display: flex; gap: 10px; align-items: center; margin-top: 3px; flex-wrap: wrap; }
+  .history-count { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; color: var(--text); }
+  .history-day-sum { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 900; color: var(--red); }
+  .history-day-chevron { color: var(--muted); font-size: 12px; transition: transform 0.2s; flex-shrink: 0; }
+  .history-day.open .history-day-chevron { transform: rotate(180deg); }
+  .history-day-body { display: none; border-top: 1px solid var(--border); padding: 10px 12px 10px 16px; }
+  .history-day.open .history-day-body { display: block; }
+  .hist-day-pay-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .hist-pay-chip { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.5px; }
+  .hist-pay-chip.gotowka { background: rgba(42,122,74,0.12); color: var(--green); }
+  .hist-pay-chip.karta { background: rgba(59,130,246,0.12); color: #2563eb; }
+  .hist-pay-chip.wolt { background: rgba(232,35,26,0.12); color: var(--red); }
+  .history-stop { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .history-stop:last-child { border-bottom: none; }
+  .history-stop-check { color: var(--green); font-size: 12px; flex-shrink: 0; margin-top: 2px; }
+  .history-stop-addr { flex: 1; font-weight: 600; line-height: 1.4; }
+  .history-stop-note { font-size: 11px; color: #8a5c00; background: #FFF3CC; padding: 1px 5px; border-radius: 3px; display: inline-block; margin-top: 2px; }
+  .history-stop-right { text-align: right; flex-shrink: 0; }
+  .history-stop-amount { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 14px; color: var(--active-tab); }
+  .history-stop-pay { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
   .no-history { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; background: var(--card-bg); border: 2px dashed var(--border); border-radius: 8px; line-height: 1.7; }
   .summary-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
   .summary-card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: var(--active-tab); margin-bottom: 10px; }
@@ -342,12 +379,24 @@
 
 <div id="tab-historia" class="tab-content">
   <div class="section" style="margin-top:14px; padding-bottom:28px">
-    <div class="sub-tabs">
-      <button class="sub-tab active" onclick="switchSubTab('epicka-h',this)">🍕 Epicka</button>
-      <button class="sub-tab" onclick="switchSubTab('tajska-h',this)">🍜 Tajska</button>
+    <div class="hist-nav">
+      <button class="hist-nav-btn" id="histPrevBtn" onclick="histNavigate(-1)">&#8592;</button>
+      <div class="hist-nav-label" id="histNavLabel">—</div>
+      <button class="hist-nav-btn" id="histNextBtn" onclick="histNavigate(1)">&#8594;</button>
     </div>
-    <div id="subtab-epicka-h"></div>
-    <div id="subtab-tajska-h" style="display:none"></div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+      <div class="hist-period-toggle">
+        <button class="hist-period-btn active" id="histWeekBtn" onclick="setHistPeriod('week',this)">Tydzień</button>
+        <button class="hist-period-btn" id="histMonthBtn" onclick="setHistPeriod('month',this)">Miesiąc</button>
+      </div>
+      <div class="sub-tabs" style="flex:1;margin:0">
+        <button class="sub-tab active" onclick="switchHistRest('epicka',this)">🍕 Epicka</button>
+        <button class="sub-tab" onclick="switchHistRest('tajska',this)">🍜 Tajska</button>
+        <button class="sub-tab" onclick="switchHistRest('all',this)">Wszystkie</button>
+      </div>
+    </div>
+    <div id="hist-summary-box"></div>
+    <div id="hist-days-list"></div>
   </div>
 </div>
 
@@ -706,11 +755,14 @@ window.confirmDeliver = async () => {
   const {id,restauracja}=pendingDeliver; closeDialog();
   const idx=stops[restauracja].findIndex(s=>s.id===id);
   if (idx===-1) return;
-  stops[restauracja][idx].delivered=true;
-  try { await updateDoc(doc(db,'stops',id),{delivered:true}); } catch(e){}
+  const deliveredAt = new Date().toISOString();
+  try { await updateDoc(doc(db,'stops',id),{delivered:true, deliveredAt}); } catch(e){}
+  // Remove from active list immediately
+  stops[restauracja].splice(idx,1);
   renderStops(restauracja);
-  const allDone=[...stops.epicka,...stops.tajska].every(s=>s.delivered);
-  if (allDone){showToast('🎉 Wszystkie dostawy zrealizowane!');launchConfetti();}
+  const allDone=[...stops.epicka,...stops.tajska].every(s=>!s.delivered || stops[restauracja].length===0);
+  const totalLeft = stops.epicka.length + stops.tajska.length;
+  if (totalLeft===0){showToast('🎉 Wszystkie dostawy zrealizowane!');launchConfetti();}
   else showToast('✓ Dostarczone!');
 };
 document.getElementById('confirmOverlay').addEventListener('click', e => { if (e.target===document.getElementById('confirmOverlay')) closeDialog(); });
@@ -787,39 +839,200 @@ window.switchTab = (tab, btn) => {
   document.getElementById('tab-'+tab).classList.add('active');
   if (tab==='epicka') loadStops('epicka');
   else if (tab==='tajska') loadStops('tajska');
-  else if (tab==='historia') loadHistoria('epicka');
+  else if (tab==='historia') { _histCache=null; renderHistoria(); }
   else if (tab==='podsumowanie') loadPodsumowanie();
 };
-window.switchSubTab = (tab, btn) => {
-  btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('subtab-epicka-h').style.display=tab==='epicka-h'?'block':'none';
-  document.getElementById('subtab-tajska-h').style.display=tab==='tajska-h'?'block':'none';
-  if (tab==='epicka-h') loadHistoria('epicka'); else loadHistoria('tajska');
-};
+// switchSubTab removed — replaced by switchHistRest
 
 // ─── HISTORIA ───
-async function loadHistoria(restauracja) {
-  const el=document.getElementById('subtab-'+restauracja+'-h');
-  el.innerHTML='<div class="loader"><div class="spinner"></div></div>';
-  try {
-    const q=query(collection(db,'stops'),where('uid','==',currentUser.uid),where('restauracja','==',restauracja),orderBy('createdAt','desc'));
-    const snap=await getDocs(q);
-    if (!snap.docs.length){el.innerHTML='<div class="no-history">Brak historii</div>';return;}
-    const items=snap.docs.map(d=>{const dt=d.data();const date=dt.createdAt?.toDate?dt.createdAt.toDate():new Date();return{...dt,id:d.id,dateStr:date.toLocaleDateString('pl-PL',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),timeStr:date.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})};});
-    const grouped={};
-    items.forEach(i=>{if(!grouped[i.dateStr])grouped[i.dateStr]=[];grouped[i.dateStr].push(i);});
-    el.innerHTML=Object.entries(grouped).map(([date,list])=>`
-      <div class="history-item">
-        <div class="history-header"><div>
-          <div class="history-date">${date}</div>
-          <div class="history-count">${list.length}</div>
-          <div class="history-label">dostaw</div>
-        </div></div>
-        <div class="history-addrs">${list.map(i=>`${i.delivered?'✓':'📍'} ${i.address}${i.note?' ('+i.note+')':''} — <b>${i.platnosc}</b>${i.oplacone?' [OPŁACONE]':i.kwota!=null?' '+i.kwota.toFixed(2)+' zł':''} (${i.timeStr})`).join('<br>')}</div>
-      </div>`).join('');
-  } catch(e){el.innerHTML=`<div class="no-history">${e.message}</div>`;}
+let histPeriod = 'week'; // 'week' | 'month'
+let histOffset = 0; // 0 = current, -1 = previous, etc.
+let histRestauracja = 'epicka';
+let _histCache = null;
+
+function getHistRange() {
+  const now = new Date();
+  if (histPeriod === 'week') {
+    // Monday-based week
+    const day = now.getDay(); // 0=Sun
+    const diffToMon = (day === 0 ? -6 : 1 - day);
+    const mon = new Date(now);
+    mon.setDate(now.getDate() + diffToMon + (histOffset * 7));
+    mon.setHours(0,0,0,0);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    sun.setHours(23,59,59,999);
+    return { start: mon, end: sun };
+  } else {
+    const d = new Date(now.getFullYear(), now.getMonth() + histOffset, 1);
+    const start = new Date(d.getFullYear(), d.getMonth(), 1);
+    const end = new Date(d.getFullYear(), d.getMonth()+1, 0, 23, 59, 59, 999);
+    return { start, end };
+  }
 }
+
+function formatHistLabel() {
+  const { start, end } = getHistRange();
+  if (histPeriod === 'week') {
+    const s = start.toLocaleDateString('pl-PL', {day:'numeric',month:'short'});
+    const e = end.toLocaleDateString('pl-PL', {day:'numeric',month:'short'});
+    return `${s} — ${e}`;
+  } else {
+    return start.toLocaleDateString('pl-PL', {month:'long', year:'numeric'});
+  }
+}
+
+window.setHistPeriod = (period, btn) => {
+  histPeriod = period;
+  histOffset = 0;
+  document.querySelectorAll('.hist-period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _histCache = null;
+  renderHistoria();
+};
+
+window.histNavigate = (dir) => {
+  histOffset += dir;
+  // Don't allow future
+  if (histOffset > 0) { histOffset = 0; return; }
+  _histCache = null;
+  renderHistoria();
+};
+
+window.switchHistRest = (r, btn) => {
+  histRestauracja = r;
+  btn.closest('.sub-tabs').querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistoria();
+};
+
+async function loadHistoriaData() {
+  if (!currentUser) return [];
+  try {
+    const q = query(
+      collection(db,'stops'),
+      where('uid','==',currentUser.uid),
+      where('delivered','==',true),
+      orderBy('deliveredAt','desc')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => {
+      const dt = d.data();
+      const date = dt.deliveredAt ? new Date(dt.deliveredAt) : (dt.createdAt?.toDate ? dt.createdAt.toDate() : new Date());
+      return { ...dt, id: d.id, _date: date };
+    });
+  } catch(e) {
+    // Fallback: query without delivered filter (index may not exist yet)
+    try {
+      const q2 = query(collection(db,'stops'), where('uid','==',currentUser.uid), orderBy('createdAt','desc'));
+      const snap2 = await getDocs(q2);
+      return snap2.docs
+        .map(d => { const dt=d.data(); const date=dt.deliveredAt?new Date(dt.deliveredAt):(dt.createdAt?.toDate?dt.createdAt.toDate():new Date()); return {...dt,id:d.id,_date:date}; })
+        .filter(d => d.delivered === true);
+    } catch(e2) { return []; }
+  }
+}
+
+async function renderHistoria() {
+  const summaryEl = document.getElementById('hist-summary-box');
+  const daysEl = document.getElementById('hist-days-list');
+  if (!summaryEl || !daysEl) return;
+
+  summaryEl.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+  daysEl.innerHTML = '';
+
+  // Update nav label
+  document.getElementById('histNavLabel').textContent = formatHistLabel();
+  document.getElementById('histNextBtn').disabled = histOffset >= 0;
+
+  // Load data (cached per session)
+  if (!_histCache) {
+    _histCache = await loadHistoriaData();
+  }
+
+  const { start, end } = getHistRange();
+  let items = _histCache.filter(d => d._date >= start && d._date <= end);
+  if (histRestauracja !== 'all') items = items.filter(d => d.restauracja === histRestauracja);
+
+  // Summary
+  const stats = { Gotówka:0, Karta:0, WOLT:0, oplacone:0, total:0 };
+  items.forEach(o => {
+    if (o.oplacone) { stats.oplacone++; }
+    else if (o.kwota != null) { stats[o.platnosc] = (stats[o.platnosc]||0) + o.kwota; stats.total += o.kwota; }
+  });
+
+  summaryEl.innerHTML = items.length === 0 ? '' : `
+    <div class="hist-summary">
+      <div class="hist-summary-title">📊 Podsumowanie okresu — ${items.length} dostaw</div>
+      <div class="hist-summary-row"><span class="hs-label">💵 Gotówka</span><span class="hs-val">${stats.Gotówka.toFixed(2)} zł</span></div>
+      <div class="hist-summary-row"><span class="hs-label">💳 Karta</span><span class="hs-val">${stats.Karta.toFixed(2)} zł</span></div>
+      <div class="hist-summary-row"><span class="hs-label">🟠 WOLT</span><span class="hs-val">${stats.WOLT.toFixed(2)} zł</span></div>
+      ${stats.oplacone>0?`<div class="hist-summary-row"><span class="hs-label">✅ Opłacone z góry</span><span class="hs-val">${stats.oplacone} szt.</span></div>`:''}
+      <div class="hist-summary-total"><span class="hs-label">Razem</span><span class="hs-val">${stats.total.toFixed(2)} ZŁ</span></div>
+    </div>`;
+
+  if (items.length === 0) {
+    daysEl.innerHTML = '<div class="no-history">Brak dostaw w tym okresie</div>';
+    return;
+  }
+
+  // Group by day
+  const grouped = {};
+  items.forEach(i => {
+    const key = i._date.toLocaleDateString('pl-PL', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(i);
+  });
+
+  daysEl.innerHTML = Object.entries(grouped).map(([dateStr, list]) => {
+    const dayStats = { Gotówka:0, Karta:0, WOLT:0, total:0 };
+    list.forEach(o => {
+      if (!o.oplacone && o.kwota!=null) { dayStats[o.platnosc]=(dayStats[o.platnosc]||0)+o.kwota; dayStats.total+=o.kwota; }
+    });
+    const payChips = [
+      dayStats.Gotówka>0?`<span class="hist-pay-chip gotowka">💵 ${dayStats.Gotówka.toFixed(2)} zł</span>`:'',
+      dayStats.Karta>0?`<span class="hist-pay-chip karta">💳 ${dayStats.Karta.toFixed(2)} zł</span>`:'',
+      dayStats.WOLT>0?`<span class="hist-pay-chip wolt">🟠 ${dayStats.WOLT.toFixed(2)} zł</span>`:''
+    ].filter(Boolean).join('');
+
+    const stops = list.map(i => {
+      const time = i._date.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+      const amtStr = i.oplacone ? '<span style="font-size:10px;color:var(--green);font-weight:700">OPŁACONE</span>' :
+        (i.kwota!=null?`<div class="history-stop-amount">${i.kwota.toFixed(2)} zł</div>`:'');
+      return `<div class="history-stop">
+        <div class="history-stop-check">✓</div>
+        <div class="history-stop-addr">
+          ${i.address}
+          ${i.note?`<div class="history-stop-note">📝 ${i.note}</div>`:''}
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${time}${i.restauracja?' · '+i.restauracja:''}</div>
+        </div>
+        <div class="history-stop-right">
+          ${amtStr}
+          <div class="history-stop-pay">${i.platnosc}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="history-day" onclick="toggleHistDay(this)">
+      <div class="history-day-header">
+        <div class="history-day-left">
+          <div class="history-date">${dateStr}</div>
+          <div class="history-day-meta">
+            <span class="history-count">${list.length} dostaw</span>
+            <span class="history-day-sum">${dayStats.total.toFixed(2)} zł</span>
+          </div>
+        </div>
+        <div class="history-day-chevron">▼</div>
+      </div>
+      <div class="history-day-body">
+        ${payChips?`<div class="hist-day-pay-row">${payChips}</div>`:''}
+        ${stops}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.toggleHistDay = (el) => { el.classList.toggle('open'); };
 
 // ─── PODSUMOWANIE ───
 async function loadPodsumowanie() {
