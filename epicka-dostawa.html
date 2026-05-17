@@ -585,6 +585,7 @@ const API_KEY = "AIzaSyBsJsvj68zxW7s3ilzBzRLdzoda8rvLBgw";
 let currentUser = null;
 let stops = { epicka: [], tajska: [] };
 let payState = { e: 'Gotówka', t: 'Gotówka' };
+let woltState = { e: false, t: false }; // WOLT is independent toggle
 let paidState = { e: false, t: false };
 let pendingDeliver = null;
 let dragSrcIdx = null;
@@ -635,9 +636,16 @@ onAuthStateChanged(auth, user => {
 
 // ─── PAYMENT ───
 window.setPay = (p, method, btn) => {
-  payState[p] = method;
-  btn.closest('.input-card').querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+  if (method === 'WOLT') {
+    // Toggle WOLT independently
+    woltState[p] = !woltState[p];
+    btn.classList.toggle('active', woltState[p]);
+  } else {
+    // Radio between Gotówka and Karta
+    payState[p] = method;
+    btn.closest('.input-card').querySelectorAll('.pay-btn:not(.wolt-btn)').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
 };
 window.togglePaid = (p) => {
   paidState[p] = !paidState[p];
@@ -740,7 +748,7 @@ window.addStop = async (restauracja) => {
   try {
     const docRef = await addDoc(collection(db,'stops'), {
       uid: currentUser.uid, restauracja, address: addr,
-      note: noteEl.value.trim(), platnosc: payState[p],
+      note: noteEl.value.trim(), platnosc: payState[p], wolt: woltState[p],
       kwota, oplacone: paidState[p], delivered: false, createdAt: serverTimestamp()
     });
     stops[restauracja].push({
@@ -751,7 +759,9 @@ window.addStop = async (restauracja) => {
     addrEl.value=''; noteEl.value=''; amtEl.value='';
     if (paidState[p]) { paidState[p]=false; document.getElementById(p+'PaidBtn').classList.remove('active'); amtEl.disabled=false; }
     payState[p]='Gotówka';
+    woltState[p]=false;
     document.querySelectorAll(`#tab-${restauracja} .input-card .pay-btn`).forEach((b,i) => b.classList.toggle('active',i===0));
+    document.querySelectorAll(`#tab-${restauracja} .input-card .wolt-btn`).forEach(b => b.classList.remove('active'));
     try { sessionToken = new google.maps.places.AutocompleteSessionToken(); } catch(e) {}
     renderStops(restauracja); showToast('✓ Dodano do trasy');
   } catch(e) { showToast('Błąd: '+e.message); }
@@ -868,11 +878,22 @@ document.getElementById('confirmOverlay').addEventListener('click', e => { if (e
 window.editStop = (id, restauracja) => {
   const s=stops[restauracja].find(s=>s.id===id); if(!s) return;
   const infoEl=document.getElementById('info-'+id); if(!infoEl) return;
+  const isOplacone = s.oplacone || false;
   infoEl.innerHTML=`<div class="edit-row">
     <input class="edit-input" id="ea-${id}" value="${s.address}" placeholder="Adres">
-    <input class="edit-input" id="ek-${id}" type="number" value="${s.kwota||''}" placeholder="Kwota" style="max-width:90px">
+    <input class="edit-input" id="ek-${id}" type="number" value="${s.kwota||''}" placeholder="Kwota" style="max-width:90px" ${isOplacone?'disabled':''}>
+    <button class="paid-btn ${isOplacone?'active':''}" id="epaid-${id}" onclick="toggleEditPaid('${id}')" style="font-size:11px;padding:6px 10px">✓ Opłacone</button>
     <button class="save-btn" onclick="saveEdit('${id}','${restauracja}')">💾 Zapisz</button>
   </div>`;
+};
+
+window.toggleEditPaid = (id) => {
+  const btn = document.getElementById('epaid-'+id);
+  const kwotaEl = document.getElementById('ek-'+id);
+  const isActive = btn.classList.contains('active');
+  btn.classList.toggle('active', !isActive);
+  kwotaEl.disabled = !isActive;
+  if (!isActive) kwotaEl.value = '';
 };
 window.changeStopPay = async (id, restauracja, platnosc, btn) => {
   try {
@@ -892,11 +913,12 @@ window.changeStopPay = async (id, restauracja, platnosc, btn) => {
 window.saveEdit = async (id, restauracja) => {
   const addr=document.getElementById('ea-'+id)?.value.trim();
   const kwotaVal=document.getElementById('ek-'+id)?.value;
-  const kwota=kwotaVal?parseFloat(kwotaVal):null;
+  const oplacone=document.getElementById('epaid-'+id)?.classList.contains('active')||false;
+  const kwota=oplacone?null:(kwotaVal?parseFloat(kwotaVal):null);
   try {
-    await updateDoc(doc(db,'stops',id),{address:addr,kwota});
+    await updateDoc(doc(db,'stops',id),{address:addr,kwota,oplacone});
     const idx=stops[restauracja].findIndex(s=>s.id===id);
-    if(idx!==-1){stops[restauracja][idx].address=addr;stops[restauracja][idx].kwota=kwota;}
+    if(idx!==-1){stops[restauracja][idx].address=addr;stops[restauracja][idx].kwota=kwota;stops[restauracja][idx].oplacone=oplacone;}
     showToast('Zapisano ✓'); renderStops(restauracja);
   } catch(e){showToast('Błąd: '+e.message);}
 };
