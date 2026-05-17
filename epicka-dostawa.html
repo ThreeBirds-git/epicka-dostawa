@@ -48,6 +48,15 @@
   .tab { flex: 1; padding: 11px 6px; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .tab svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
   .tab.active { color: var(--active-tab); border-bottom-color: var(--active-tab); background: var(--cream); }
+  .tab-epicka.active { color: var(--red); border-bottom-color: var(--red); background: var(--cream); }
+  .tab-tajska.active { color: #BFD837; border-bottom-color: #BFD837; background: #2D4410; }
+  .tab-tajska { color: #7a9a30; }
+
+  /* Restaurant hero headers */
+  .rest-hero { padding: 28px 16px 8px; text-align: center; }
+  .rest-hero-epicka { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 72px; color: var(--red); letter-spacing: 4px; line-height: 1; text-transform: uppercase; }
+  .rest-hero-tajska { font-family: Georgia, 'Times New Roman', serif; font-weight: 900; font-size: 80px; color: #BFD837; line-height: 1; letter-spacing: -2px; }
+  .rest-hero-tajska-wrap { background: #2D4410; border-radius: 8px; padding: 20px 24px 16px; display: inline-block; margin-bottom: 4px; }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
   .section { padding: 14px 14px 0; }
@@ -238,6 +247,43 @@
   .spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--red); border-radius: 50%; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* Tajska tab theming */
+  #tab-tajska { background: #2D4410; min-height: calc(100vh - 130px); }
+  #tab-tajska .section-title { color: #8aaa40; }
+  #tab-tajska .input-card { background: #3a5a18; border-color: #4a7020; }
+  #tab-tajska .addr-input,
+  #tab-tajska .note-input,
+  #tab-tajska .amount-input { background: #3f6318; border-color: #5a8a28; color: #BFD837; }
+  #tab-tajska .addr-input::placeholder,
+  #tab-tajska .note-input::placeholder,
+  #tab-tajska .amount-input::placeholder { color: #7a9a30; }
+  #tab-tajska .addr-input:focus,
+  #tab-tajska .note-input:focus,
+  #tab-tajska .amount-input:focus { border-color: #BFD837; }
+  #tab-tajska .pay-btn { background: #3a5a18; border-color: #4a7020; color: #8aaa40; }
+  #tab-tajska .pay-btn.active { border-color: #BFD837; color: #BFD837; background: rgba(191,216,55,0.12); }
+  #tab-tajska .paid-btn { background: #3a5a18; border-color: #4a7020; color: #8aaa40; }
+  #tab-tajska .paid-btn.active { border-color: #BFD837; color: #BFD837; background: rgba(191,216,55,0.12); }
+  #tab-tajska .amount-label { color: #8aaa40; }
+  #tab-tajska .add-btn { background: #BFD837; color: #2D4410; }
+  #tab-tajska .stop-item { background: #3a5a18; border-color: #4a7020; }
+  #tab-tajska .stop-item::before { background: #BFD837; }
+  #tab-tajska .stop-address { color: #BFD837; }
+  #tab-tajska .stop-note { background: rgba(191,216,55,0.15); color: #BFD837; }
+  #tab-tajska .stop-time { color: #7a9a30; }
+  #tab-tajska .stop-num { background: #BFD837; color: #2D4410; }
+  #tab-tajska .drag-handle { color: #4a7020; }
+  #tab-tajska .icon-btn { background: #3a5a18; border-color: #4a7020; color: #8aaa40; }
+  #tab-tajska .ok-btn { background: rgba(191,216,55,0.12); border-color: #BFD837; color: #BFD837; }
+  #tab-tajska .del-btn { background: rgba(232,35,26,0.1); border-color: rgba(232,35,26,0.4); color: #ff6b6b; }
+  #tab-tajska .empty-state { background: #3a5a18; border-color: #4a7020; color: #7a9a30; }
+  #tab-tajska .empty-state svg { fill: #4a7020; }
+  #tab-tajska .plan-btn { background: #BFD837; color: #2D4410; box-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+  #tab-tajska .plan-btn:disabled { opacity: 0.35; }
+  #tab-tajska .pay-icon { background: #3a5a18; border-color: #4a7020; }
+  #tab-tajska .stop-pay-icons .pay-icon { background: #3a5a18; border-color: #4a7020; }
+  #tab-tajska .section-title { color: #8aaa40; }
+
   /* Settings */
   .gear-btn { background: none; border: 1.5px solid var(--border); border-radius: 6px; color: var(--muted); width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.2s, color 0.2s; }
   .gear-btn:hover { border-color: var(--red); color: var(--red); }
@@ -321,11 +367,11 @@
 </header>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('epicka',this)">
+  <button class="tab tab-epicka active" onclick="switchTab('epicka',this)">
     <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
     EPICKA
   </button>
-  <button class="tab" onclick="switchTab('tajska',this)">
+  <button class="tab tab-tajska" onclick="switchTab('tajska',this)">
     <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
     TAJSKA
   </button>
@@ -337,7 +383,10 @@
 </div>
 
 <div id="tab-epicka" class="tab-content active">
-  <div class="section" style="margin-top:14px">
+  <div class="rest-hero">
+    <div class="rest-hero-epicka">EPICKA</div>
+  </div>
+  <div class="section" style="margin-top:8px">
     <div class="section-title">Dodaj przystanek — Epicka</div>
     <div class="input-card">
       <div class="input-wrapper">
@@ -378,6 +427,9 @@
 </div>
 
 <div id="tab-tajska" class="tab-content">
+  <div class="rest-hero" style="background:#2D4410;margin:0;padding:20px 16px 12px;border-radius:0 0 8px 8px">
+    <div class="rest-hero-tajska">tajska</div>
+  </div>
   <div class="section" style="margin-top:14px">
     <div class="section-title">Dodaj przystanek — Tajska</div>
     <div class="input-card">
@@ -970,6 +1022,9 @@ window.switchTab = (tab, btn) => {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   btn.classList.add('active');
+  // Apply tab-specific active color class
+  if (tab==='epicka') btn.classList.add('tab-epicka');
+  if (tab==='tajska') btn.classList.add('tab-tajska');
   document.getElementById('tab-'+tab).classList.add('active');
   if (tab==='epicka') loadStops('epicka');
   else if (tab==='tajska') loadStops('tajska');
