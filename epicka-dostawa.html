@@ -60,7 +60,8 @@
 
   @media (max-width: 600px) {
     .hamburger-btn { display: flex; }
-    .header-user { display: none; }
+    .header-user { display: none !important; }
+    .signout-btn { display: none !important; }
   }
 
   /* ─── MOBILE APP LAYOUT ─── */
@@ -928,6 +929,8 @@ onAuthStateChanged(auth, user => {
     document.getElementById('app').style.display = 'block';
     document.getElementById('userName').textContent = user.displayName?.split(' ')[0] || '';
     document.getElementById('userAvatar').src = user.photoURL || '';
+    document.getElementById('hamburgerUserName').textContent = user.displayName?.split(' ')[0] || '';
+    document.getElementById('hamburgerAvatar').src = user.photoURL || '';
     loadGoogleMaps();
     loadStops('epicka');
     loadStops('tajska');
