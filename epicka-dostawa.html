@@ -32,6 +32,40 @@
   body.dark .settings-panel { background: #181818; }
   body.dark .settings-overlay { background: rgba(0,0,0,0.7); }
   body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; }
+
+  /* ─── MOBILE APP LAYOUT ─── */
+  @media (max-width: 600px) {
+    body { padding-bottom: 0; overflow: hidden; height: 100dvh; }
+    #app { display: flex; flex-direction: column; height: 100dvh; max-height: 100dvh; overflow: hidden; }
+    header { flex-shrink: 0; }
+    .tabs { flex-shrink: 0; }
+    .tab-content.active { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+    .rest-hero { padding: 12px 16px 4px; flex-shrink: 0; }
+    .rest-hero-epicka { font-size: 48px; }
+    .rest-hero-tajska { font-size: 52px; }
+    .section { flex-shrink: 0; }
+    .section:has(.stops-list) { flex: 1; overflow-y: auto; min-height: 0; padding-bottom: 8px; }
+    .section:has(.plan-btn) { flex-shrink: 0; padding-bottom: 16px; }
+    .stops-list { overflow-y: auto; }
+    .bottom-checker { display: none; }
+
+    /* Historia i inne zakładki */
+    #tab-historia .section,
+    #tab-podsumowanie .section { flex: 1; overflow-y: auto; min-height: 0; padding-bottom: 16px; }
+
+    /* Zmniejsz padding i fonty na małych ekranach */
+    .header-inner { padding: 8px 12px 10px; }
+    .logo { font-size: 22px; }
+    .logo span { font-size: 10px; }
+    .header-counter { font-size: 10px; padding: 4px 8px; }
+    .input-card { padding: 10px; }
+    .addr-input { font-size: 14px; padding: 10px 40px 10px 10px; }
+    .section-title { font-size: 11px; }
+    .pay-btn { font-size: 11px; padding: 7px 4px; }
+    .paid-btn { font-size: 10px; padding: 7px 8px; }
+    .amount-input { font-size: 13px; padding: 8px 10px; }
+    .plan-btn { font-size: 16px; padding: 14px; }
+  }
   .checker { height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
   header { background: var(--cream); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 0 var(--border); }
   .header-inner { padding: 10px 16px 12px; display: flex; align-items: center; gap: 10px; }
@@ -783,9 +817,8 @@ window.addStop = async (restauracja) => {
 // ─── LOAD STOPS ───
 async function loadStops(restauracja) {
   if (!currentUser) return;
-  const today = new Date(); today.setHours(0,0,0,0);
   try {
-    const q = query(collection(db,'stops'), where('uid','==',currentUser.uid), where('restauracja','==',restauracja), where('createdAt','>=',Timestamp.fromDate(today)), orderBy('createdAt','asc'));
+    const q = query(collection(db,'stops'), where('uid','==',currentUser.uid), where('restauracja','==',restauracja), where('delivered','==',false), orderBy('createdAt','asc'));
     const snap = await getDocs(q);
     stops[restauracja] = snap.docs.map(d => {
       const dt=d.data(); const date=dt.createdAt?.toDate?dt.createdAt.toDate():new Date();
@@ -983,9 +1016,8 @@ window.planRoute = (restauracja) => {
   });
 };
 function openMaps(webUrl) {
-  const nativeUrl=webUrl.replace('https://www.google.com/maps','comgooglemaps://');
-  const w=window.open(nativeUrl,'_blank');
-  setTimeout(()=>{try{if(!w||w.closed)window.open(webUrl,'_blank');}catch(e){window.open(webUrl,'_blank');}},500);
+  // Always open in new tab — works on all platforms including iOS Chrome
+  window.open(webUrl, '_blank');
 }
 
 // ─── TABS ───
