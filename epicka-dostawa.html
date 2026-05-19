@@ -735,40 +735,52 @@
     <span class="hamburger-title">Menu</span>
     <button class="hamburger-close" onclick="closeHamburger()">✕</button>
   </div>
-  <div class="hamburger-user">
-    <img class="avatar" id="hamburgerAvatar" src="" alt="">
-    <span class="hamburger-user-name" id="hamburgerUserName"></span>
+  <div class="hamburger-user" style="padding-bottom:20px;margin-bottom:8px;border-bottom:1px solid var(--border)">
+    <img class="avatar" id="hamburgerAvatar" src="" alt="" style="width:48px;height:48px">
+    <span class="hamburger-user-name" id="hamburgerUserName" style="font-size:16px"></span>
   </div>
-  <button class="hamburger-item" onclick="closeHamburger();openShiftPopup()">
-    <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
-    Czas zmiany
-  </button>
-  <div class="hamburger-section">
-    <div class="hamburger-section-title">⚙️ Ustawienia</div>
-    <div class="hamburger-setting-row">
-      <div>
-        <div class="hamburger-setting-label">💰 Stawka netto</div>
-        <div class="hamburger-setting-sub">Zmień stawkę za godzinę</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
-        <input class="rate-input" id="hamburgerRateInput" type="number" min="1" max="999" placeholder="25" inputmode="decimal" style="font-size:15px;padding:7px 9px;width:80px">
-        <span class="rate-unit">zł/h</span>
-        <button class="admin-submit" onclick="saveRateFromHamburger()">Zapisz</button>
-      </div>
+
+  <div class="hamburger-setting-row">
+    <div>
+      <div class="hamburger-setting-label">💰 Stawka netto</div>
+      <div class="hamburger-setting-sub">Zmień stawkę za godzinę</div>
     </div>
-    <div class="hamburger-setting-row">
-      <div class="hamburger-setting-label">🌙 Dark mode</div>
-      <label class="toggle">
-        <input type="checkbox" id="hamburgerDarkToggle" onchange="toggleDarkMode(this.checked)">
-        <span class="toggle-slider"></span>
-      </label>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+      <input class="rate-input" id="hamburgerRateInput" type="number" min="1" max="999" placeholder="25" inputmode="decimal" style="font-size:15px;padding:7px 9px;width:80px">
+      <span class="rate-unit">zł/h</span>
+      <button class="admin-submit" onclick="saveRateFromHamburger()">Zapisz</button>
     </div>
-    <div class="hamburger-setting-row">
-      <div class="hamburger-setting-label">🔐 Pozostań zalogowany</div>
-      <label class="toggle">
-        <input type="checkbox" id="hamburgerStayToggle" onchange="toggleStayLogged(this.checked)">
-        <span class="toggle-slider"></span>
-      </label>
+  </div>
+
+  <div class="hamburger-setting-row">
+    <div class="hamburger-setting-label">🌙 Dark mode</div>
+    <label class="toggle">
+      <input type="checkbox" id="hamburgerDarkToggle" onchange="toggleDarkMode(this.checked)">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+
+  <div class="hamburger-setting-row">
+    <div class="hamburger-setting-label">🔐 Pozostań zalogowany</div>
+    <label class="toggle">
+      <input type="checkbox" id="hamburgerStayToggle" onchange="toggleStayLogged(this.checked)">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+
+  <div class="hamburger-setting-row" style="flex-direction:column;align-items:flex-start;gap:6px">
+    <div class="hamburger-setting-label">🛡️ Tryb admina <span id="hamburgerAdminBadge" style="display:none" class="admin-badge">AKTYWNY</span></div>
+    <div class="hamburger-setting-sub" id="hamburgerAdminStatus">Wpisz kod dostępu żeby odblokować</div>
+    <div id="hamburgerAdminCodeRow" style="display:flex;gap:6px;width:100%">
+      <input class="admin-input" id="hamburgerAdminCode" type="password" placeholder="Kod dostępu" style="flex:1" onkeydown="if(event.key==='Enter')checkAdminCodeHamburger()">
+      <button class="admin-submit" onclick="checkAdminCodeHamburger()">Odblokuj</button>
+    </div>
+    <div id="hamburgerAdminPassRow" style="display:none;gap:6px;width:100%">
+      <input class="admin-input" id="hamburgerAdminPass" type="password" placeholder="Hasło admina" style="flex:1" onkeydown="if(event.key==='Enter')checkAdminPassHamburger()">
+      <button class="admin-submit" onclick="checkAdminPassHamburger()">Zaloguj</button>
+    </div>
+    <div id="hamburgerAdminDeactivate" style="display:none">
+      <button class="admin-submit" style="background:var(--muted)" onclick="deactivateAdmin();syncHamburgerAdmin()">Wyloguj z trybu admina</button>
     </div>
   </div>
   <button class="hamburger-item danger" style="margin-top:auto" onclick="closeHamburger();doSignOut()">
@@ -1736,6 +1748,51 @@ window.deleteHistStop = async (id) => {
 // ─── ADMIN MODE ───
 const ADMIN_UID = 'XHIMMd5njmSbjYP7tSyMfe5MDDT2';
 const ADMIN_CODE = '192837465';
+
+function syncHamburgerAdmin() {
+  const badge = document.getElementById('hamburgerAdminBadge');
+  const status = document.getElementById('hamburgerAdminStatus');
+  const codeRow = document.getElementById('hamburgerAdminCodeRow');
+  const passRow = document.getElementById('hamburgerAdminPassRow');
+  const deactivate = document.getElementById('hamburgerAdminDeactivate');
+  // Mirror state from main settings
+  const mainBadge = document.getElementById('adminBadge');
+  const isActive = mainBadge && mainBadge.style.display !== 'none';
+  if (badge) badge.style.display = isActive ? '' : 'none';
+  if (status) status.textContent = isActive ? 'Tryb admina aktywny' : 'Wpisz kod dostępu żeby odblokować';
+  if (codeRow) codeRow.style.display = isActive ? 'none' : 'flex';
+  if (passRow) passRow.style.display = 'none';
+  if (deactivate) deactivate.style.display = isActive ? '' : 'none';
+}
+
+window.checkAdminCodeHamburger = () => {
+  const val = document.getElementById('hamburgerAdminCode').value.trim();
+  if (val === ADMIN_CODE) {
+    document.getElementById('hamburgerAdminCodeRow').style.display = 'none';
+    document.getElementById('hamburgerAdminPassRow').style.display = 'flex';
+    document.getElementById('hamburgerAdminCode').value = '';
+  } else {
+    showToast('Nieprawidłowy kod');
+    document.getElementById('hamburgerAdminCode').value = '';
+  }
+};
+
+window.checkAdminPassHamburger = () => {
+  const val = document.getElementById('hamburgerAdminPass').value.trim();
+  if (val === ADMIN_PASS) {
+    isAdmin = true;
+    document.getElementById('hamburgerAdminPass').value = '';
+    updateAdminUI();
+    syncHamburgerAdmin();
+    showToast('✓ Tryb admina aktywny');
+    closeHamburger();
+    _histCache = null;
+    renderHistoria();
+  } else {
+    showToast('Nieprawidłowe hasło');
+    document.getElementById('hamburgerAdminPass').value = '';
+  }
+};
 const ADMIN_PASS = 'cukiereczkiciasteczka';
 let isAdmin = false;
 
@@ -1856,6 +1913,7 @@ window.openHamburgerMenu = () => {
   const rate = getRate();
   const rateEl = document.getElementById('hamburgerRateInput');
   if (rateEl && rate) rateEl.value = rate;
+  syncHamburgerAdmin();
   const stayPref = localStorage.getItem('epStayLogged');
   const stayEl = document.getElementById('hamburgerStayToggle');
   if (stayEl) stayEl.checked = stayPref !== '0';
