@@ -642,6 +642,7 @@ onAuthStateChanged(auth, user => {
     document.getElementById('userAvatar').src = user.photoURL || '';
     loadGoogleMaps();
     loadStops('epicka');
+    loadStops('tajska');
     if (_firstLogin) {
       _firstLogin = false;
       // Show stay dialog only if pref not set and dontAsk not set
@@ -801,12 +802,12 @@ window.addStop = async (restauracja) => {
 async function loadStops(restauracja) {
   if (!currentUser) return;
   try {
-    const q = query(collection(db,'stops'), where('uid','==',currentUser.uid), where('restauracja','==',restauracja), where('delivered','==',false), orderBy('createdAt','asc'));
+    const q = query(collection(db,'stops'), where('uid','==',currentUser.uid), where('restauracja','==',restauracja), where('delivered','==',false));
     const snap = await getDocs(q);
     stops[restauracja] = snap.docs.map(d => {
       const dt=d.data(); const date=dt.createdAt?.toDate?dt.createdAt.toDate():new Date();
       return { id:d.id, ...dt, time:date.toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'}) };
-    });
+    }).sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
     renderStops(restauracja);
   } catch(e) { showToast('Błąd ładowania: '+e.message); }
 }
