@@ -35,85 +35,11 @@
 
   /* ─── MOBILE APP LAYOUT ─── */
   @media (max-width: 600px) {
-    body { padding-bottom: 0; }
-    .bottom-checker { display: none; }
-
-    /* Header + tabs sticky na górze */
-    header { position: sticky; top: 0; z-index: 100; }
-    .tabs { position: sticky; top: 72px; z-index: 99; }
-
-    /* Content scrolluje normalnie */
-    .tab-content.active { display: block; overflow-y: auto; }
-
-    /* Kompaktowe elementy */
-    .rest-hero { padding: 10px 14px 0; }
     .rest-hero-epicka { font-size: 44px; }
     .rest-hero-tajska { font-size: 48px; }
-    .header-inner { padding: 7px 12px 9px; }
-    .logo { font-size: 22px; }
-    .logo span { font-size: 10px; }
-    .header-counter { font-size: 10px; padding: 4px 8px; }
-    .section { padding: 10px 12px 0; }
-    .section-title { font-size: 11px; margin-bottom: 8px; }
-    .input-card { padding: 10px; }
-    .addr-input { font-size: 14px; padding: 10px 40px 10px 10px; }
-    .note-input { font-size: 13px; }
-    .pay-btn { font-size: 11px; padding: 7px 4px; }
-    .paid-btn { font-size: 10px; padding: 7px 8px; }
-    .amount-input { font-size: 13px; padding: 8px 10px; }
-    .note-row { margin-top: 6px; gap: 6px; }
-    .payment-row { margin-top: 6px; gap: 5px; }
-    .amount-row { margin-top: 6px; }
-    .plan-btn { font-size: 15px; padding: 13px; margin-bottom: 16px; }
-  }
-
-    /* Formularz — nie rośnie */
-    .tab-content.active > .section:first-of-type {
-      flex-shrink: 0;
-      padding-top: 10px;
-    }
-
-    /* Lista przystanków — rośnie i scrolluje */
-    .tab-content.active > .section:nth-of-type(2) {
-      flex: 1;
-      overflow-y: auto;
-      min-height: 0;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* Przycisk zaplanuj — zawsze na dole */
-    .tab-content.active > .section:last-of-type {
-      flex-shrink: 0;
-      padding-bottom: 12px;
-    }
-
-    /* Historia */
-    #tab-historia.tab-content.active > .section {
-      flex: 1;
-      overflow-y: auto;
-      min-height: 0;
-      -webkit-overflow-scrolling: touch;
-    }
-
     .bottom-checker { display: none; }
-
-    /* Kompaktowe elementy */
-    .header-inner { padding: 7px 12px 9px; }
-    .logo { font-size: 22px; }
-    .logo span { font-size: 10px; }
-    .header-counter { font-size: 10px; padding: 4px 8px; }
-    .input-card { padding: 10px; }
-    .addr-input { font-size: 14px; padding: 10px 40px 10px 10px; }
-    .section { padding: 10px 12px 0; }
-    .section-title { font-size: 11px; margin-bottom: 8px; }
-    .pay-btn { font-size: 11px; padding: 7px 4px; }
-    .paid-btn { font-size: 10px; padding: 7px 8px; }
-    .amount-input { font-size: 13px; padding: 8px 10px; }
-    .note-input { font-size: 13px; }
-    .plan-btn { font-size: 15px; padding: 13px; }
-    .note-row { margin-top: 6px; gap: 6px; }
-    .payment-row { margin-top: 6px; gap: 5px; }
-    .amount-row { margin-top: 6px; }
+    .plan-btn { position: sticky; bottom: 0; }
+    .tabs { top: var(--header-h, 56px); }
   }
   .checker { height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
   header { background: var(--cream); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 0 var(--border); }
@@ -775,6 +701,14 @@ window.initAC = () => {
     });
     el.addEventListener('keydown', e => { if (e.key==='Enter') { e.preventDefault(); addStop(p==='e'?'epicka':'tajska'); }});
   });
+  // Set header height CSS var for sticky tabs on mobile
+  const setHeaderH = () => {
+    const h = document.querySelector('header');
+    if (h) document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
+  };
+  setHeaderH();
+  window.addEventListener('resize', setHeaderH);
+
   document.addEventListener('click', e => {
     if (!e.target.closest('.input-card')) {
       document.getElementById('eSuggestions').style.display='none';
