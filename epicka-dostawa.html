@@ -783,7 +783,7 @@ window.addStop = async (restauracja) => {
     });
     stops[restauracja].push({
       id: docRef.id, address: addr, note: noteEl.value.trim(),
-      platnosc: payState[p], kwota, oplacone: paidState[p], delivered: false,
+      platnosc: payState[p], wolt: woltState[p], kwota, oplacone: paidState[p], delivered: false,
       time: new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})
     });
     addrEl.value=''; noteEl.value=''; amtEl.value='';
