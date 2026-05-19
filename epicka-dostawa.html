@@ -965,6 +965,7 @@ window.saveEdit = async (id, restauracja) => {
 
 // ─── REMOVE STOP ───
 window.removeStop = async (id, restauracja) => {
+  if (!confirm('Usunąć ten przystanek?')) return;
   try {
     await deleteDoc(doc(db,'stops',id));
     stops[restauracja]=stops[restauracja].filter(s=>s.id!==id);
