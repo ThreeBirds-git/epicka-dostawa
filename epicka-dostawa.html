@@ -840,7 +840,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut as fbSignOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, setPersistence, browserLocalPersistence, browserSessionPersistence, signOut as fbSignOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp, Timestamp }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
@@ -858,6 +858,9 @@ const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const provider = new GoogleAuthProvider();
+
+// Handle redirect result on return from Google login (mobile)
+getRedirectResult(auth).catch(() => {});
 
 const PIZZERIA = "Pizzeria Epicka, Szczecin";
 const TAJSKA = "Tajska Kuchnia, Szczecin";
@@ -984,15 +987,11 @@ window.signInWithGoogle = async () => {
 window.doSignOut = async () => { await fbSignOut(auth); };
 
 // Set persistence based on saved pref BEFORE signing in
-import("https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js").then(m => {
-  window._authModule = m;
-  const pref = localStorage.getItem('epStayLogged');
-  const persistence = pref === '0' ? m.browserSessionPersistence : m.browserLocalPersistence;
-  m.setPersistence(auth, persistence);
-});
+const _pref = localStorage.getItem('epStayLogged');
+setPersistence(auth, _pref === '0' ? browserSessionPersistence : browserLocalPersistence);
 
 let _firstLogin = true;
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
   currentUser = user;
   if (user) {
     document.getElementById('auth-screen').style.display = 'none';
@@ -1010,7 +1009,8 @@ onAuthStateChanged(auth, user => {
         photoURL: user.photoURL || '',
         lastLogin: serverTimestamp()
       }, { merge: true });
-    } catch(e) { console.warn('Could not save user:', e); }
+    } catch(e) {
+ }
     loadGoogleMaps();
     loadStops('epicka');
     loadStops('tajska');
@@ -2068,16 +2068,7 @@ window.closeSettings = (e) => {
 };
 window.toggleStayLogged = (val) => {
   localStorage.setItem('epStayLogged', val ? '1' : '0');
-  if (!val) {
-    // set firebase persistence to session
-    import("https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js").then(m => {
-      m.setPersistence(auth, m.browserSessionPersistence);
-    });
-  } else {
-    import("https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js").then(m => {
-      m.setPersistence(auth, m.browserLocalPersistence);
-    });
-  }
+  setPersistence(auth, val ? browserLocalPersistence : browserSessionPersistence);
 };
 
 window.answerStay = (yes) => {
