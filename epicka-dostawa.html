@@ -840,7 +840,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut as fbSignOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp, Timestamp }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
@@ -971,7 +971,16 @@ const DRAG_SVG = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentC
 const EDIT_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>`;
 
 // ─── AUTH ───
-window.signInWithGoogle = async () => { try { await signInWithPopup(auth, provider); } catch(e) { showToast('Błąd logowania'); } };
+window.signInWithGoogle = async () => {
+  try {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      await signInWithRedirect(auth, provider);
+    } else {
+      await signInWithPopup(auth, provider);
+    }
+  } catch(e) { showToast('Błąd logowania: ' + e.message); }
+};
 window.doSignOut = async () => { await fbSignOut(auth); };
 
 // Set persistence based on saved pref BEFORE signing in
