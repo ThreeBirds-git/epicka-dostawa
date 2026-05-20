@@ -860,8 +860,6 @@ const db = getFirestore(fbApp);
 const provider = new GoogleAuthProvider();
 
 // Handle redirect result on return from Google login (mobile)
-getRedirectResult(auth).catch(() => {});
-
 const PIZZERIA = "Pizzeria Epicka, Szczecin";
 const TAJSKA = "Tajska Kuchnia, Szczecin";
 const API_KEY = "AIzaSyBsJsvj68zxW7s3ilzBzRLdzoda8rvLBgw";
@@ -988,7 +986,9 @@ window.doSignOut = async () => { await fbSignOut(auth); };
 
 // Set persistence based on saved pref BEFORE signing in
 const _pref = localStorage.getItem('epStayLogged');
-setPersistence(auth, _pref === '0' ? browserSessionPersistence : browserLocalPersistence);
+setPersistence(auth, _pref === '0' ? browserSessionPersistence : browserLocalPersistence)
+  .then(() => getRedirectResult(auth))
+  .catch(() => {});
 
 let _firstLogin = true;
 onAuthStateChanged(auth, async user => {
@@ -2077,10 +2077,7 @@ window.answerStay = (yes) => {
   localStorage.setItem('epStayLogged', yes ? '1' : '0');
   document.getElementById('stayOverlay').classList.remove('show');
   // Apply persistence
-  const { setPersistence, browserLocalPersistence, browserSessionPersistence } = window._authModule || {};
-  if (setPersistence) {
-    setPersistence(auth, yes ? browserLocalPersistence : browserSessionPersistence);
-  }
+  setPersistence(auth, yes ? browserLocalPersistence : browserSessionPersistence);
 };
 
 function showStayDialog() {
