@@ -974,20 +974,20 @@ const EDIT_SVG = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentC
 // ─── AUTH ───
 window.signInWithGoogle = async () => {
   try {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      await signInWithRedirect(auth, provider);
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+      try { await signInWithRedirect(auth, provider); } catch(e2) { showToast('Błąd logowania: ' + e2.message); }
     } else {
-      await signInWithPopup(auth, provider);
+      showToast('Błąd logowania: ' + e.message);
     }
-  } catch(e) { showToast('Błąd logowania: ' + e.message); }
+  }
 };
 window.doSignOut = async () => { await fbSignOut(auth); };
 
 // Set persistence based on saved pref BEFORE signing in
 const _pref = localStorage.getItem('epStayLogged');
 setPersistence(auth, _pref === '0' ? browserSessionPersistence : browserLocalPersistence)
-  .then(() => getRedirectResult(auth))
   .catch(() => {});
 
 let _firstLogin = true;
@@ -2090,8 +2090,7 @@ function showStayDialog() {
 const savedDark = localStorage.getItem('epDarkMode');
 if (savedDark === '1') applyDarkMode(true);
 
-// Override onAuthStateChanged to show stay dialog on first login
-const _origAuth = onAuthStateChanged;
+
 </script>
 </body>
 </html>
