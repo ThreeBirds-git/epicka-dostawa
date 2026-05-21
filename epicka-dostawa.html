@@ -649,13 +649,19 @@
   <div class="shift-panel">
     <div class="shift-title">🕐 Czas zmiany</div>
     <div class="shift-sub" id="shiftSubText">Wpisz godziny dzisiejszej zmiany</div>
-    <div class="shift-row">
-      <span class="shift-label">Od</span>
-      <select class="shift-select" id="shiftFrom"></select>
+    <div id="shiftAdminOffRow" style="display:none;align-items:center;gap:10px;margin-bottom:14px;padding:10px 12px;background:rgba(232,35,26,0.07);border-radius:8px;border:1.5px solid rgba(232,35,26,0.2)">
+      <input type="checkbox" id="shiftDayOff" style="width:18px;height:18px;accent-color:var(--red);cursor:pointer;flex-shrink:0" onchange="toggleShiftDayOff(this.checked)">
+      <label for="shiftDayOff" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--red);cursor:pointer">Dzisiaj nie pracuję</label>
     </div>
-    <div class="shift-row">
-      <span class="shift-label">Do</span>
-      <select class="shift-select" id="shiftTo"></select>
+    <div id="shiftTimeRows">
+      <div class="shift-row">
+        <span class="shift-label">Od</span>
+        <select class="shift-select" id="shiftFrom"></select>
+      </div>
+      <div class="shift-row">
+        <span class="shift-label">Do</span>
+        <select class="shift-select" id="shiftTo"></select>
+      </div>
     </div>
     <div class="shift-error" id="shiftError"></div>
     <button class="shift-btn" onclick="saveShift()">Zacznij zmianę</button>
@@ -891,7 +897,21 @@ function buildShiftOptions() {
   }
   toSel.value = maxH;
   document.getElementById('shiftSubText').textContent = `Zakres: 12:00 – ${maxH}:00`;
+  // Show admin checkbox if admin
+  const adminRow = document.getElementById('shiftAdminOffRow');
+  if (adminRow) adminRow.style.display = isAdmin ? 'flex' : 'none';
+  // Reset checkbox
+  const cb = document.getElementById('shiftDayOff');
+  if (cb) { cb.checked = false; toggleShiftDayOff(false); }
 }
+
+window.toggleShiftDayOff = (checked) => {
+  const timeRows = document.getElementById('shiftTimeRows');
+  if (timeRows) {
+    timeRows.style.opacity = checked ? '0.35' : '1';
+    timeRows.style.pointerEvents = checked ? 'none' : '';
+  }
+};
 
 function openShiftPopup() {
   buildShiftOptions();
@@ -900,6 +920,14 @@ function openShiftPopup() {
 }
 
 window.saveShift = () => {
+  const dayOff = document.getElementById('shiftDayOff')?.checked;
+  if (dayOff) {
+    localStorage.setItem(getShiftKey(), JSON.stringify({ disabled: true }));
+    document.getElementById('shiftOverlay').classList.remove('show');
+    updateShiftBadge();
+    showToast('Dzień wolny zapisany ✓');
+    return;
+  }
   const from = parseInt(document.getElementById('shiftFrom').value);
   const to = parseInt(document.getElementById('shiftTo').value);
   const maxH = getMaxHour();
@@ -918,9 +946,13 @@ function updateShiftBadge() {
   const shift = getTodayShift();
   const badge = document.getElementById('shiftBadge');
   if (!badge) return;
-  if (shift) {
+  if (shift && !shift.disabled) {
     badge.style.display = '';
     badge.textContent = `${shift.from}:00–${shift.to}:00`;
+  } else if (shift && shift.disabled) {
+    badge.style.display = '';
+    badge.textContent = '🚫 Wolne';
+    badge.style.opacity = '0.5';
   } else {
     badge.style.display = 'none';
   }
@@ -1608,7 +1640,7 @@ async function renderHistoria() {
   const uniqueDays = [...new Set(items.map(o => o._date?.toISOString?.().slice(0,10) || ''))].filter(Boolean);
   uniqueDays.forEach(day => {
     const shift = JSON.parse(localStorage.getItem('epShift_' + day) || 'null');
-    if (shift) { stats.shiftHours += shift.hours; stats.shiftEarn += shift.hours * rate; }
+    if (shift && !shift.disabled) { stats.shiftHours += shift.hours; stats.shiftEarn += shift.hours * rate; }
   });
 
   summaryEl.innerHTML = items.length === 0 ? '' : `
@@ -1675,7 +1707,7 @@ async function renderHistoria() {
           <div class="history-day-meta">
             <span class="history-count">${list.length} dostaw</span>
             <span class="history-day-sum">${dayStats.total.toFixed(2)} zł</span>
-            ${(()=>{const dayKey=list[0]?._date?.toISOString?.().slice(0,10);const sh=dayKey?JSON.parse(localStorage.getItem('epShift_'+dayKey)||'null'):null;const earn=sh?(sh.hours*(getRate()||0)):0;return sh?`<span style="color:var(--green);font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">💰 ${earn.toFixed(0)} zł</span>`:''})()}
+            ${(()=>{const dayKey=list[0]?._date?.toISOString?.().slice(0,10);const sh=dayKey?JSON.parse(localStorage.getItem('epShift_'+dayKey)||'null'):null;const earn=(sh&&!sh.disabled)?(sh.hours*(getRate()||0)):0;return (sh&&!sh.disabled)?`<span style="color:var(--green);font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">💰 ${earn.toFixed(0)} zł</span>`:(sh&&sh.disabled?`<span style="color:var(--muted);font-size:11px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">🚫 WOLNE</span>`:'')})()}
           </div>
         </div>
         <div class="history-day-chevron">▼</div>
