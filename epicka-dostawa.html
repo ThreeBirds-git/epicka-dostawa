@@ -364,6 +364,15 @@
   .hist-date-input:focus { border-color: var(--red); }
   .hist-date-btn { background: var(--red); border: none; border-radius: 6px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; padding: 8px 14px; cursor: pointer; letter-spacing: 1px; }
 
+  /* Admin date row in input cards */
+  .admin-date-row { margin-top: 10px; border-top: 1.5px dashed var(--border); padding-top: 10px; }
+  .admin-date-row-inner { display: flex; gap: 8px; flex-wrap: wrap; }
+  .admin-date-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 90px; }
+  .admin-date-field label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); }
+  .admin-date-input, .admin-date-select { background: white; border: 2px solid rgba(232,35,26,0.3); border-radius: 6px; padding: 7px 8px; font-family: 'Barlow', sans-serif; font-size: 13px; color: var(--text); outline: none; width: 100%; }
+  .admin-date-input:focus, .admin-date-select:focus { border-color: var(--red); }
+  body.dark .admin-date-input, body.dark .admin-date-select { background: #222; color: #f0f0f0; }
+
   /* Stay logged in dialog */
   .stay-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 700; display: none; align-items: center; justify-content: center; padding: 20px; }
   .stay-overlay.show { display: flex; }
@@ -463,6 +472,22 @@
         <input type="number" id="eAmountInput" class="amount-input" placeholder="0.00" step="0.01" min="0"/>
         <span class="amount-label">zł</span>
       </div>
+      <div id="eAdminDateRow" class="admin-date-row" style="display:none">
+        <div class="admin-date-row-inner">
+          <div class="admin-date-field">
+            <label>📅 Data</label>
+            <input type="date" id="eAdminDate" class="admin-date-input">
+          </div>
+          <div class="admin-date-field">
+            <label>🕐 Zmiana od</label>
+            <select id="eAdminShiftFrom" class="admin-date-select"></select>
+          </div>
+          <div class="admin-date-field">
+            <label>🕐 do</label>
+            <select id="eAdminShiftTo" class="admin-date-select"></select>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <div class="section" style="margin-top:14px">
@@ -506,6 +531,22 @@
       <div class="amount-row">
         <input type="number" id="tAmountInput" class="amount-input" placeholder="0.00" step="0.01" min="0"/>
         <span class="amount-label">zł</span>
+      </div>
+      <div id="tAdminDateRow" class="admin-date-row" style="display:none">
+        <div class="admin-date-row-inner">
+          <div class="admin-date-field">
+            <label>📅 Data</label>
+            <input type="date" id="tAdminDate" class="admin-date-input">
+          </div>
+          <div class="admin-date-field">
+            <label>🕐 Zmiana od</label>
+            <select id="tAdminShiftFrom" class="admin-date-select"></select>
+          </div>
+          <div class="admin-date-field">
+            <label>🕐 do</label>
+            <select id="tAdminShiftTo" class="admin-date-select"></select>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1187,17 +1228,48 @@ window.addStop = async (restauracja) => {
   const addr = addrEl.value.trim();
   if (!addr) { showToast('Wpisz adres!'); return; }
   const kwota = paidState[p] ? null : (amtEl.value ? parseFloat(amtEl.value) : null);
+
+  // Admin: custom date and shift
+  let createdAtVal = serverTimestamp();
+  let deliveredAtVal = null;
+  let stopTime = new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+  if (isAdmin) {
+    const dateEl = document.getElementById(p+'AdminDate');
+    const fromEl = document.getElementById(p+'AdminShiftFrom');
+    const toEl = document.getElementById(p+'AdminShiftTo');
+    if (dateEl && dateEl.value) {
+      const customDate = new Date(dateEl.value + 'T12:00:00');
+      createdAtVal = Timestamp.fromDate(customDate);
+      deliveredAtVal = customDate.toISOString();
+      stopTime = '12:00';
+      // Save shift for that day if hours selected
+      const sf = parseInt(fromEl?.value);
+      const st = parseInt(toEl?.value);
+      if (!isNaN(sf) && !isNaN(st) && sf < st) {
+        const shiftKey = 'epShift_' + dateEl.value;
+        const existing = JSON.parse(localStorage.getItem(shiftKey) || 'null');
+        if (!existing) {
+          localStorage.setItem(shiftKey, JSON.stringify({ from: sf, to: st, hours: st - sf, earn: (st - sf) * (getRate() || 0) }));
+        }
+      }
+    }
+  }
+
   try {
-    const docRef = await addDoc(collection(db,'stops'), {
+    const stopData = {
       uid: currentUser.uid, restauracja, address: addr,
       note: noteEl.value.trim(), platnosc: payState[p], wolt: woltState[p],
-      kwota, oplacone: paidState[p], delivered: false, createdAt: serverTimestamp()
-    });
-    stops[restauracja].push({
-      id: docRef.id, address: addr, note: noteEl.value.trim(),
-      platnosc: payState[p], wolt: woltState[p], kwota, oplacone: paidState[p], delivered: false,
-      time: new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'})
-    });
+      kwota, oplacone: paidState[p], delivered: false, createdAt: createdAtVal
+    };
+    if (deliveredAtVal) { stopData.delivered = true; stopData.deliveredAt = deliveredAtVal; }
+    const docRef = await addDoc(collection(db,'stops'), stopData);
+    if (!deliveredAtVal) {
+      stops[restauracja].push({
+        id: docRef.id, address: addr, note: noteEl.value.trim(),
+        platnosc: payState[p], wolt: woltState[p], kwota, oplacone: paidState[p], delivered: false,
+        time: stopTime
+      });
+    }
     addrEl.value=''; noteEl.value=''; amtEl.value='';
     if (paidState[p]) {
       paidState[p]=false;
@@ -1909,12 +1981,37 @@ function updateAdminUI() {
     codeRow.style.display = 'none';
     passRow.style.display = 'none';
     deactivateRow.style.display = 'block';
+    // Show admin date rows in input cards
+    ['e','t'].forEach(p => {
+      const row = document.getElementById(p+'AdminDateRow');
+      if (!row) return;
+      row.style.display = 'block';
+      // Set default date to today
+      const dateEl = document.getElementById(p+'AdminDate');
+      if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0,10);
+      // Populate shift selects
+      const fromSel = document.getElementById(p+'AdminShiftFrom');
+      const toSel = document.getElementById(p+'AdminShiftTo');
+      if (fromSel && !fromSel.options.length) {
+        for (let h = 12; h <= 23; h++) {
+          fromSel.innerHTML += `<option value="${h}">${h}:00</option>`;
+          toSel.innerHTML += `<option value="${h}">${h}:00</option>`;
+        }
+        fromSel.value = 16;
+        toSel.value = 22;
+      }
+    });
   } else {
     badge.style.display = 'none';
     statusText.textContent = 'Wpisz kod dostępu żeby odblokować';
     codeRow.style.display = 'flex';
     passRow.style.display = 'none';
     deactivateRow.style.display = 'none';
+    // Hide admin date rows
+    ['e','t'].forEach(p => {
+      const row = document.getElementById(p+'AdminDateRow');
+      if (row) row.style.display = 'none';
+    });
   }
 }
 
