@@ -1612,7 +1612,12 @@ window.planRoute = (restauracja) => {
   const active=stops[restauracja].filter(s=>!s.delivered);
   const startPoint = restauracja==='tajska' ? TAJSKA : PIZZERIA;
   if (!active.length){showToast('Brak aktywnych przystanków!');return;}
-  if (active.length===1){openMaps(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startPoint)}&destination=${encodeURIComponent(active[0].address)}&travelmode=driving`);return;}
+  if (active.length===1){
+    window.open(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startPoint)}&destination=${encodeURIComponent(active[0].address)}&travelmode=driving`, '_blank');
+    return;
+  }
+  // Open window immediately (before async) to avoid popup blocker
+  const mapsWin = window.open('', '_blank');
   showToast('⏳ Obliczam optymalną trasę...');
   const ds=new google.maps.DirectionsService();
   ds.route({
@@ -1620,23 +1625,43 @@ window.planRoute = (restauracja) => {
     waypoints:active.slice(0,-1).map(s=>({location:s.address,stopover:true})),
     optimizeWaypoints:true, travelMode:google.maps.TravelMode.DRIVING
   },(result,status)=>{
+    let url;
     if (status==='OK'&&result.routes[0]){
       const order=result.routes[0].waypoint_order;
       const sorted=[...order.map(i=>active[i]),active[active.length-1]];
       const originEnc=encodeURIComponent(startPoint);
       const dest=encodeURIComponent(sorted[sorted.length-1].address);
       const waypts=sorted.slice(0,-1).map(s=>encodeURIComponent(s.address)).join('%7C');
-      openMaps(`https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${dest}&waypoints=${waypts}&travelmode=driving`);
+      url=`https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${dest}&waypoints=${waypts}&travelmode=driving`;
     } else {
       const originEnc=encodeURIComponent(startPoint);
       const waypts=active.map(s=>encodeURIComponent(s.address)).join('%7C');
-      openMaps(`https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${originEnc}&waypoints=${waypts}&travelmode=driving&optimize=true`);
+      url=`https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${originEnc}&waypoints=${waypts}&travelmode=driving&optimize=true`;
     }
+    if (mapsWin) mapsWin.location.href = url;
+    else window.open(url, '_blank');
   });
 };
 function openMaps(webUrl) {
-  // Always open in new tab — works on all platforms including iOS Chrome
-  window.open(webUrl, '_blank');
+  // Try to open native Maps app via comgooglemaps:// (iOS) or intent (Android)
+  // Falls back to web URL if app not installed
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+
+  if (isIOS) {
+    // iOS Google Maps app deep link
+    const nativeUrl = webUrl.replace('https://www.google.com/maps', 'comgooglemaps://');
+    // Try native, fall back to web after short delay
+    window.location.href = nativeUrl;
+    setTimeout(() => { window.open(webUrl, '_blank'); }, 500);
+  } else if (isAndroid) {
+    // Android intent URL - opens Google Maps app directly
+    const intentUrl = 'intent://maps.google.com/maps?' + webUrl.split('?')[1] + '#Intent;scheme=https;package=com.google.android.apps.maps;end';
+    window.location.href = intentUrl;
+  } else {
+    // Desktop - new tab
+    window.open(webUrl, '_blank');
+  }
 }
 
 // ─── TABS ───
