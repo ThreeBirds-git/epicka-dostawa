@@ -954,8 +954,54 @@ let payState = { e: 'Gotówka', t: 'Gotówka' };
 
 // ─── SHIFT & RATE LOGIC ───
 function getRate() { return parseFloat(localStorage.getItem('epRate')) || null; }
-function getShiftKey() { return 'epShift_' + new Date().toISOString().slice(0,10); }
-function getTodayShift() { return JSON.parse(localStorage.getItem(getShiftKey()) || 'null'); }
+
+async function saveRateToFirestore(val) {
+  if (!currentUser) return;
+  try { await updateDoc(doc(db,'users',currentUser.uid), { rate: val }); } catch(e) {}
+}
+
+async function loadRateFromFirestore() {
+  if (!currentUser) return;
+  try {
+    const snap = await getDocs(query(collection(db,'users'), where('uid','==',currentUser.uid)));
+    if (!snap.empty) {
+      const r = snap.docs[0].data().rate;
+      if (r) localStorage.setItem('epRate', r);
+    }
+  } catch(e) {}
+}
+function todayDateStr() { return new Date().toISOString().slice(0,10); }
+
+// Firestore shift cache
+const _shiftCache = {};
+
+async function getShiftForDate(dateStr) {
+  if (_shiftCache[dateStr] !== undefined) return _shiftCache[dateStr];
+  if (!currentUser) return null;
+  try {
+    const q = query(collection(db,'shifts'), where('uid','==',currentUser.uid), where('date','==',dateStr));
+    const snap = await getDocs(q);
+    const shift = snap.empty ? null : snap.docs[0].data();
+    _shiftCache[dateStr] = shift;
+    return shift;
+  } catch(e) { return null; }
+}
+
+async function saveShiftForDate(dateStr, shiftData) {
+  if (!currentUser) return;
+  try {
+    const q = query(collection(db,'shifts'), where('uid','==',currentUser.uid), where('date','==',dateStr));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      await updateDoc(doc(db,'shifts',snap.docs[0].id), shiftData);
+    } else {
+      await addDoc(collection(db,'shifts'), { uid: currentUser.uid, date: dateStr, ...shiftData });
+    }
+    _shiftCache[dateStr] = shiftData;
+  } catch(e) { showToast('Błąd zapisu zmiany: '+e.message); }
+}
+
+async function getTodayShift() { return await getShiftForDate(todayDateStr()); }
 
 function getMaxHour() {
   const d = new Date().getDay(); // 0=nd,1=pn,...,6=sb
@@ -997,12 +1043,12 @@ function openShiftPopup() {
   document.getElementById('shiftOverlay').classList.add('show');
 }
 
-window.saveShift = () => {
+window.saveShift = async () => {
   const dayOff = document.getElementById('shiftDayOff')?.checked;
   if (dayOff) {
-    localStorage.setItem(getShiftKey(), JSON.stringify({ disabled: true }));
+    await saveShiftForDate(todayDateStr(), { disabled: true });
     document.getElementById('shiftOverlay').classList.remove('show');
-    updateShiftBadge();
+    updateShiftBadge({ disabled: true });
     showToast('Dzień wolny zapisany ✓');
     return;
   }
@@ -1014,32 +1060,39 @@ window.saveShift = () => {
   if (from < 12 || to > maxH || from >= to) {
     errEl.textContent = `Czas zmiany poza zakresem (12:00–${maxH}:00)`; return;
   }
-  const shift = { from, to, hours: to - from, earn: (to - from) * (getRate() || 0) };
-  localStorage.setItem(getShiftKey(), JSON.stringify(shift));
+  const shift = { from, to, hours: to - from };
+  await saveShiftForDate(todayDateStr(), shift);
   document.getElementById('shiftOverlay').classList.remove('show');
-  updateShiftBadge();
+  updateShiftBadge(shift);
+  showToast('Zmiana zapisana ✓');
 };
 
-function updateShiftBadge() {
-  const shift = getTodayShift();
+function updateShiftBadge(shift) {
   const badge = document.getElementById('shiftBadge');
   if (!badge) return;
   if (shift && !shift.disabled) {
     badge.style.display = '';
-    badge.textContent = `${shift.from}:00–${shift.to}:00`;
+    badge.style.opacity = '1';
+    badge.textContent = shift.from + ':00–' + shift.to + ':00';
   } else if (shift && shift.disabled) {
     badge.style.display = '';
-    badge.textContent = '🚫 Wolne';
     badge.style.opacity = '0.5';
+    badge.textContent = '🚫 Wolne';
   } else {
     badge.style.display = 'none';
   }
+}
+
+async function updateShiftBadgeAsync() {
+  const shift = await getTodayShift();
+  updateShiftBadge(shift);
 }
 
 window.saveRate = () => {
   const val = parseFloat(document.getElementById('rateInput').value);
   if (!val || val < 1) { showToast('Wpisz poprawną stawkę!'); return; }
   localStorage.setItem('epRate', val);
+  saveRateToFirestore(val);
   document.getElementById('rateOverlay').classList.remove('show');
   showToast('Stawka zapisana ✓');
   // After rate saved, show shift popup
@@ -1050,23 +1103,24 @@ window.saveRateFromSettings = () => {
   const val = parseFloat(document.getElementById('settingsRateInput').value);
   if (!val || val < 1) { showToast('Wpisz poprawną stawkę!'); return; }
   localStorage.setItem('epRate', val);
+  saveRateToFirestore(val);
   showToast('Stawka zaktualizowana ✓');
 };
 
 window.openShiftPopup = openShiftPopup;
 
-function checkAndShowPopups() {
+async function checkAndShowPopups() {
   const rate = getRate();
   if (!rate) {
     document.getElementById('rateOverlay').classList.add('show');
     return;
   }
-  const shift = getTodayShift();
+  const shift = await getTodayShift();
   if (!shift) {
     openShiftPopup();
     return;
   }
-  updateShiftBadge();
+  updateShiftBadge(shift);
 }
 let woltState = { e: false, t: false }; // WOLT is independent toggle
 let paidState = { e: false, t: false };
@@ -1124,6 +1178,7 @@ onAuthStateChanged(auth, async user => {
     loadGoogleMaps();
     loadStops('epicka');
     loadStops('tajska');
+    await loadRateFromFirestore();
     checkAndShowPopups();
     if (_firstLogin) {
       _firstLogin = false;
@@ -1761,10 +1816,10 @@ async function renderHistoria() {
   });
   // Add shift earnings per unique day
   const uniqueDays = [...new Set(items.map(o => o._date?.toISOString?.().slice(0,10) || ''))].filter(Boolean);
-  uniqueDays.forEach(day => {
-    const shift = JSON.parse(localStorage.getItem('epShift_' + day) || 'null');
+  await Promise.all(uniqueDays.map(async day => {
+    const shift = await getShiftForDate(day);
     if (shift && !shift.disabled) { stats.shiftHours += shift.hours; stats.shiftEarn += shift.hours * rate; }
-  });
+  }));
 
   summaryEl.innerHTML = items.length === 0 ? '' : `
     <div class="hist-summary">
@@ -1791,6 +1846,7 @@ async function renderHistoria() {
 
   daysEl.innerHTML = Object.entries(grouped).map(([dateStr, list]) => {
     const dayStats = { Gotówka:0, Karta:0, woltCount:0, total:0 };
+    const dayKey = list[0]?._date?.toISOString?.().slice(0,10) || '';
     list.forEach(o => {
       const isWolt = o.wolt || o.platnosc === 'WOLT';
       const platnosc = o.platnosc === 'WOLT' ? 'Gotówka' : o.platnosc;
@@ -1823,6 +1879,12 @@ async function renderHistoria() {
       </div>`;
     }).join('');
 
+    const sh = _shiftCache[dayKey] ?? null;
+    const earn = (sh && !sh.disabled) ? (sh.hours * (getRate() || 0)) : 0;
+    const earnHtml = (sh && !sh.disabled)
+      ? '<span style="color:#2a7a4a;font-weight:900;font-family:Barlow Condensed,sans-serif;letter-spacing:1px">💰 ' + earn.toFixed(0) + ' zł</span>'
+      : (sh && sh.disabled ? '<span style="color:#8a7f72;font-size:11px">🚫 WOLNE</span>' : '');
+
     return `<div class="history-day">
       <div class="history-day-header" onclick="toggleHistDay(this.closest('.history-day'))">
         <div class="history-day-left">
@@ -1830,10 +1892,10 @@ async function renderHistoria() {
           <div class="history-day-meta">
             <span class="history-count">${list.length} dostaw</span>
             <span class="history-day-sum">${dayStats.total.toFixed(2)} zł</span>
-            ${(()=>{const dayKey=list[0]?._date?.toISOString?.().slice(0,10)||'';const sh=_shiftCache[dayKey]??null;const earn=(sh&&!sh.disabled)?(sh.hours*(getRate()||0)):0;if(sh&&!sh.disabled)return '<span style="color:#2a7a4a;font-weight:900;font-family:Barlow Condensed,sans-serif">💰 '+earn.toFixed(0)+' zł</span>';if(sh&&sh.disabled)return '<span style="color:#8a7f72;font-size:11px">🚫 WOLNE</span>';return '';})()}
+            ${earnHtml}
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0" data-daykey="${list[0]?._date?.toISOString?.().slice(0,10)||''}">
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0" data-daykey="${dayKey}">
           <div class="history-day-chevron">▼</div>
         </div>
       </div>
@@ -2329,6 +2391,7 @@ window.saveRateFromHamburger = () => {
   const val = parseFloat(document.getElementById('hamburgerRateInput').value);
   if (!val || val < 1) { showToast('Wpisz poprawną stawkę!'); return; }
   localStorage.setItem('epRate', val);
+  saveRateToFirestore(val);
   showToast('Stawka zaktualizowana ✓');
 };
 
