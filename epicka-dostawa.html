@@ -364,13 +364,21 @@
   .hist-date-input:focus { border-color: var(--red); }
   .hist-date-btn { background: var(--red); border: none; border-radius: 6px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; padding: 8px 14px; cursor: pointer; letter-spacing: 1px; }
 
+  /* Shift edit overlay */
+  .shift-edit-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 650; display: none; align-items: flex-end; justify-content: center; }
+  .shift-edit-overlay.show { display: flex; }
+  .shift-edit-panel { background: var(--cream); border-radius: 16px 16px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 480px; }
+  .shift-edit-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 1px; margin-bottom: 6px; color: var(--text); }
+  body.dark .shift-edit-panel { background: #181818; }
+
   /* Admin date row in input cards */
   .admin-date-row { margin-top: 10px; border-top: 1.5px dashed rgba(232,35,26,0.3); padding-top: 10px; }
-  .admin-date-row-inner { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  @media (max-width: 420px) { .admin-date-row-inner { grid-template-columns: 1fr; } }
-  .admin-date-field { display: flex; flex-direction: column; gap: 4px; }
-  .admin-date-field label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); white-space: nowrap; }
-  .admin-date-input, .admin-date-select { background: white; border: 2px solid rgba(232,35,26,0.3); border-radius: 6px; padding: 7px 8px; font-family: 'Barlow', sans-serif; font-size: 13px; color: var(--text); outline: none; width: 100%; }
+  .admin-date-row-inner { display: flex; gap: 6px; align-items: flex-end; flex-wrap: nowrap; overflow: hidden; }
+  .admin-date-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .admin-date-field.field-date { flex: 2; min-width: 0; }
+  .admin-date-field.field-from, .admin-date-field.field-to { flex: 1; min-width: 0; }
+  .admin-date-field label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--red); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .admin-date-input, .admin-date-select { background: white; border: 2px solid rgba(232,35,26,0.3); border-radius: 6px; padding: 7px 6px; font-family: 'Barlow', sans-serif; font-size: 13px; color: var(--text); outline: none; width: 100%; min-width: 0; }
   .admin-date-input:focus, .admin-date-select:focus { border-color: var(--red); }
   body.dark .admin-date-input, body.dark .admin-date-select { background: #222; color: #f0f0f0; }
 
@@ -475,16 +483,16 @@
       </div>
       <div id="eAdminDateRow" class="admin-date-row" style="display:none">
         <div class="admin-date-row-inner">
-          <div class="admin-date-field">
+          <div class="admin-date-field field-date">
             <label>📅 Data</label>
             <input type="date" id="eAdminDate" class="admin-date-input">
           </div>
-          <div class="admin-date-field">
-            <label>🕐 Zmiana od</label>
+          <div class="admin-date-field field-from">
+            <label>🕐 Od</label>
             <select id="eAdminShiftFrom" class="admin-date-select"></select>
           </div>
-          <div class="admin-date-field">
-            <label>🕐 do</label>
+          <div class="admin-date-field field-to">
+            <label>🕐 Do</label>
             <select id="eAdminShiftTo" class="admin-date-select"></select>
           </div>
         </div>
@@ -538,16 +546,16 @@
       </div>
       <div id="tAdminDateRow" class="admin-date-row" style="display:none">
         <div class="admin-date-row-inner">
-          <div class="admin-date-field">
+          <div class="admin-date-field field-date">
             <label>📅 Data</label>
             <input type="date" id="tAdminDate" class="admin-date-input">
           </div>
-          <div class="admin-date-field">
-            <label>🕐 Zmiana od</label>
+          <div class="admin-date-field field-from">
+            <label>🕐 Od</label>
             <select id="tAdminShiftFrom" class="admin-date-select"></select>
           </div>
-          <div class="admin-date-field">
-            <label>🕐 do</label>
+          <div class="admin-date-field field-to">
+            <label>🕐 Do</label>
             <select id="tAdminShiftTo" class="admin-date-select"></select>
           </div>
         </div>
@@ -636,20 +644,6 @@
       <div class="hist-edit-pay-row">
         <button class="hist-edit-pay-btn" id="histEditPaidBtn" onclick="toggleHistEditPaid(this)" style="flex:none;padding:8px 16px">✓ Opłacone</button>
       </div>
-    </div>
-    <div id="histEditShiftRow" style="display:none;margin-bottom:12px;padding-top:12px;border-top:1.5px dashed rgba(232,35,26,0.3)">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);margin-bottom:8px">🛡️ Admin — godziny zmiany</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="hist-edit-field" style="margin-bottom:0">
-          <label>Od</label>
-          <select id="histEditShiftFrom" style="width:100%;background:white;border:2px solid rgba(232,35,26,0.3);border-radius:6px;padding:8px;font-family:'Barlow',sans-serif;font-size:14px;color:var(--text);outline:none"></select>
-        </div>
-        <div class="hist-edit-field" style="margin-bottom:0">
-          <label>Do</label>
-          <select id="histEditShiftTo" style="width:100%;background:white;border:2px solid rgba(232,35,26,0.3);border-radius:6px;padding:8px;font-family:'Barlow',sans-serif;font-size:14px;color:var(--text);outline:none"></select>
-        </div>
-      </div>
-      <button onclick="saveHistEditShift()" style="margin-top:8px;width:100%;background:var(--red);border:none;border-radius:6px;color:white;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:8px;cursor:pointer;letter-spacing:1px">💾 Zapisz godziny</button>
     </div>
     <div class="hist-edit-btns">
       <button class="hist-edit-btn-cancel" onclick="closeHistEdit()">Anuluj</button>
@@ -839,6 +833,28 @@
       <button class="stay-btn no" onclick="answerStay(false)">Nie</button>
       <button class="stay-btn yes" onclick="answerStay(true)">Tak, zostań</button>
     </div>
+  </div>
+</div>
+
+<div class="shift-edit-overlay" id="shiftEditOverlay" onclick="closeShiftEdit(event)">
+  <div class="shift-edit-panel">
+    <div class="shift-edit-title">🕐 Edytuj godziny zmiany</div>
+    <div id="shiftEditDateLabel" style="font-size:13px;color:var(--muted);margin-bottom:16px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div>
+        <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Od</label>
+        <select id="shiftEditFrom" class="shift-select"></select>
+      </div>
+      <div>
+        <label style="display:block;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Do</label>
+        <select id="shiftEditTo" class="shift-select"></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button onclick="saveShiftEdit()" style="flex:2;background:var(--red);border:none;border-radius:8px;color:white;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;padding:12px;cursor:pointer;letter-spacing:1px">💾 Zapisz</button>
+      <button onclick="closeShiftEdit()" style="flex:1;background:var(--cream-dark);border:2px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;padding:12px;cursor:pointer">Anuluj</button>
+    </div>
+    <button onclick="deleteShiftEdit()" style="width:100%;background:none;border:1.5px solid rgba(232,35,26,0.3);border-radius:8px;color:var(--red);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:9px;cursor:pointer;letter-spacing:1px">🗑 Usuń godziny tego dnia</button>
   </div>
 </div>
 
@@ -1814,10 +1830,13 @@ async function renderHistoria() {
           <div class="history-day-meta">
             <span class="history-count">${list.length} dostaw</span>
             <span class="history-day-sum">${dayStats.total.toFixed(2)} zł</span>
-            ${(()=>{const dayKey=list[0]?._date?.toISOString?.().slice(0,10);const sh=dayKey?JSON.parse(localStorage.getItem('epShift_'+dayKey)||'null'):null;const earn=(sh&&!sh.disabled)?(sh.hours*(getRate()||0)):0;return (sh&&!sh.disabled)?`<span style="color:var(--green);font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">💰 ${earn.toFixed(0)} zł</span>`:(sh&&sh.disabled?`<span style="color:var(--muted);font-size:11px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">🚫 WOLNE</span>`:'')})()}
+            ${(()=>{const dayKey=list[0]?._date?.toISOString?.().slice(0,10);const sh=dayKey?(_shiftCache[dayKey]??null):null;const earn=(sh&&!sh.disabled)?(sh.hours*(getRate()||0)):0;return (sh&&!sh.disabled)?`<span style="color:var(--green);font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">💰 ${earn.toFixed(0)} zł</span>`:(sh&&sh.disabled?`<span style="color:var(--muted);font-size:11px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">🚫 WOLNE</span>`:'')})()}
           </div>
         </div>
-        <div class="history-day-chevron">▼</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          ${isAdmin ? `<button class="hist-edit-btn" onclick="event.stopPropagation();openShiftEdit('${list[0]?._date?.toISOString?.().slice(0,10)||''}')" title="Edytuj godziny zmiany" style="width:30px;height:30px"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M11.5 2C6.81 2 3 5.81 3 10.5S6.81 19 11.5 19h.5v3c4.86-2.34 8-7 8-11.5C20 5.81 16.19 2 11.5 2zm1 14.5h-2v-2h2v2zm0-4h-2c0-3.25 3-3 3-5 0-1.1-.9-2-2-2s-2 .9-2 2h-2c0-2.21 1.79-4 4-4s4 1.79 4 4c0 2.5-3 2.75-3 5z"/></svg></button>` : ''}
+          <div class="history-day-chevron">▼</div>
+        </div>
       </div>
       <div class="history-day-body">
         ${payChips?`<div class="hist-day-pay-row">${payChips}</div>`:''}
@@ -1828,6 +1847,69 @@ async function renderHistoria() {
 }
 
 window.toggleHistDay = (el) => { el.classList.toggle('open'); };
+
+// ─── ADMIN SHIFT EDIT ───
+let _shiftEditDate = null;
+
+window.openShiftEdit = async (dateStr) => {
+  if (!dateStr || !isAdmin) return;
+  _shiftEditDate = dateStr;
+  const d = new Date(dateStr + 'T12:00:00');
+  document.getElementById('shiftEditDateLabel').textContent =
+    d.toLocaleDateString('pl-PL', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const fromSel = document.getElementById('shiftEditFrom');
+  const toSel = document.getElementById('shiftEditTo');
+  fromSel.innerHTML = ''; toSel.innerHTML = '';
+  for (let h = 12; h <= 23; h++) {
+    fromSel.innerHTML += `<option value="${h}">${h}:00</option>`;
+    toSel.innerHTML += `<option value="${h}">${h}:00</option>`;
+  }
+  const shift = await getShiftForDate(dateStr);
+  if (shift && !shift.disabled) {
+    fromSel.value = shift.from;
+    toSel.value = shift.to;
+  } else {
+    fromSel.value = 16;
+    toSel.value = 22;
+  }
+  document.getElementById('shiftEditOverlay').classList.add('show');
+};
+
+window.closeShiftEdit = (e) => {
+  if (!e || e.target === document.getElementById('shiftEditOverlay')) {
+    document.getElementById('shiftEditOverlay').classList.remove('show');
+    _shiftEditDate = null;
+  }
+};
+
+window.saveShiftEdit = async () => {
+  if (!_shiftEditDate) return;
+  const from = parseInt(document.getElementById('shiftEditFrom').value);
+  const to = parseInt(document.getElementById('shiftEditTo').value);
+  if (isNaN(from) || isNaN(to) || from >= to) { showToast('Nieprawidłowy zakres godzin'); return; }
+  await saveShiftForDate(_shiftEditDate, { from, to, hours: to - from });
+  showToast('Godziny zapisane ✓');
+  document.getElementById('shiftEditOverlay').classList.remove('show');
+  _shiftEditDate = null;
+  _histCache = null;
+  renderHistoria();
+};
+
+window.deleteShiftEdit = async () => {
+  if (!_shiftEditDate) return;
+  if (!confirm('Usunąć godziny zmiany dla tego dnia?')) return;
+  try {
+    const q = query(collection(db,'shifts'), where('uid','==',currentUser.uid), where('date','==',_shiftEditDate));
+    const snap = await getDocs(q);
+    for (const d of snap.docs) await deleteDoc(doc(db,'shifts',d.id));
+    delete _shiftCache[_shiftEditDate];
+  } catch(e) { showToast('Błąd: '+e.message); return; }
+  showToast('Godziny usunięte ✓');
+  document.getElementById('shiftEditOverlay').classList.remove('show');
+  _shiftEditDate = null;
+  _histCache = null;
+  renderHistoria();
+};
 
 // ─── PODSUMOWANIE ───
 async function loadPodsumowanie() {
