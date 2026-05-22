@@ -1830,11 +1830,10 @@ async function renderHistoria() {
           <div class="history-day-meta">
             <span class="history-count">${list.length} dostaw</span>
             <span class="history-day-sum">${dayStats.total.toFixed(2)} zł</span>
-            ${(()=>{const dayKey=list[0]?._date?.toISOString?.().slice(0,10);const sh=dayKey?(_shiftCache[dayKey]??null):null;const earn=(sh&&!sh.disabled)?(sh.hours*(getRate()||0)):0;return (sh&&!sh.disabled)?`<span style="color:var(--green);font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">💰 ${earn.toFixed(0)} zł</span>`:(sh&&sh.disabled?`<span style="color:var(--muted);font-size:11px;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">🚫 WOLNE</span>`:'')})()}
+            ${(()=>{const dayKey=list[0]?._date?.toISOString?.().slice(0,10)||'';const sh=_shiftCache[dayKey]??null;const earn=(sh&&!sh.disabled)?(sh.hours*(getRate()||0)):0;if(sh&&!sh.disabled)return '<span style="color:#2a7a4a;font-weight:900;font-family:Barlow Condensed,sans-serif">💰 '+earn.toFixed(0)+' zł</span>';if(sh&&sh.disabled)return '<span style="color:#8a7f72;font-size:11px">🚫 WOLNE</span>';return '';})()}
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-          ${(()=>{ const dk=list[0]?._date?.toISOString?.().slice(0,10)||''; return isAdmin ? '<button class="hist-edit-btn" onclick="event.stopPropagation();openShiftEdit(\'' + dk + '\')" title="Edytuj godziny zmiany" style="width:30px;height:30px"><svg viewBox=\"0 0 24 24\" width=\"13\" height=\"13\" fill=\"currentColor\"><path d=\"M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z\"/></svg></button>' : ''; })()}
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0" data-daykey="${list[0]?._date?.toISOString?.().slice(0,10)||''}">
           <div class="history-day-chevron">▼</div>
         </div>
       </div>
@@ -1844,6 +1843,21 @@ async function renderHistoria() {
       </div>
     </div>`;
   }).join('');
+
+  // Inject admin pencil buttons into day headers
+  if (isAdmin) {
+    daysEl.querySelectorAll('.history-day-header [data-daykey]').forEach(el => {
+      const dk = el.getAttribute('data-daykey');
+      if (!dk) return;
+      const btn = document.createElement('button');
+      btn.className = 'hist-edit-btn';
+      btn.title = 'Edytuj godziny zmiany';
+      btn.style.cssText = 'width:30px;height:30px;flex-shrink:0';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+      btn.onclick = (e) => { e.stopPropagation(); openShiftEdit(dk); };
+      el.insertBefore(btn, el.querySelector('.history-day-chevron'));
+    });
+  }
 }
 
 window.toggleHistDay = (el) => { el.classList.toggle('open'); };
