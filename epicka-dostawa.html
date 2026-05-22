@@ -365,10 +365,11 @@
   .hist-date-btn { background: var(--red); border: none; border-radius: 6px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; padding: 8px 14px; cursor: pointer; letter-spacing: 1px; }
 
   /* Admin date row in input cards */
-  .admin-date-row { margin-top: 10px; border-top: 1.5px dashed var(--border); padding-top: 10px; }
-  .admin-date-row-inner { display: flex; gap: 8px; flex-wrap: wrap; }
-  .admin-date-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 90px; }
-  .admin-date-field label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); }
+  .admin-date-row { margin-top: 10px; border-top: 1.5px dashed rgba(232,35,26,0.3); padding-top: 10px; }
+  .admin-date-row-inner { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  @media (max-width: 420px) { .admin-date-row-inner { grid-template-columns: 1fr; } }
+  .admin-date-field { display: flex; flex-direction: column; gap: 4px; }
+  .admin-date-field label { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--red); white-space: nowrap; }
   .admin-date-input, .admin-date-select { background: white; border: 2px solid rgba(232,35,26,0.3); border-radius: 6px; padding: 7px 8px; font-family: 'Barlow', sans-serif; font-size: 13px; color: var(--text); outline: none; width: 100%; }
   .admin-date-input:focus, .admin-date-select:focus { border-color: var(--red); }
   body.dark .admin-date-input, body.dark .admin-date-select { background: #222; color: #f0f0f0; }
@@ -491,7 +492,10 @@
     </div>
   </div>
   <div class="section" style="margin-top:14px">
-    <div class="section-title" id="eStopsTitle">PRZYSTANKI (0 aktywnych)</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="section-title" id="eStopsTitle" style="margin-bottom:0">PRZYSTANKI (0 aktywnych)</div>
+      <button id="eDeliverAllBtn" onclick="deliverAll('epicka')" style="display:none;background:var(--green);border:none;border-radius:6px;color:white;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;padding:6px 12px;cursor:pointer;white-space:nowrap">✓ Wszystkie dostarczone</button>
+    </div>
     <div class="stops-list" id="eStopsList"></div>
   </div>
   <div class="section" style="margin-top:14px; padding-bottom:28px">
@@ -551,7 +555,10 @@
     </div>
   </div>
   <div class="section" style="margin-top:14px">
-    <div class="section-title" id="tStopsTitle">PRZYSTANKI (0 aktywnych)</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="section-title" id="tStopsTitle" style="margin-bottom:0">PRZYSTANKI (0 aktywnych)</div>
+      <button id="tDeliverAllBtn" onclick="deliverAll('tajska')" style="display:none;background:var(--green);border:none;border-radius:6px;color:white;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;padding:6px 12px;cursor:pointer;white-space:nowrap">✓ Wszystkie dostarczone</button>
+    </div>
     <div class="stops-list" id="tStopsList"></div>
   </div>
   <div class="section" style="margin-top:14px; padding-bottom:28px">
@@ -629,6 +636,20 @@
       <div class="hist-edit-pay-row">
         <button class="hist-edit-pay-btn" id="histEditPaidBtn" onclick="toggleHistEditPaid(this)" style="flex:none;padding:8px 16px">✓ Opłacone</button>
       </div>
+    </div>
+    <div id="histEditShiftRow" style="display:none;margin-bottom:12px;padding-top:12px;border-top:1.5px dashed rgba(232,35,26,0.3)">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);margin-bottom:8px">🛡️ Admin — godziny zmiany</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="hist-edit-field" style="margin-bottom:0">
+          <label>Od</label>
+          <select id="histEditShiftFrom" style="width:100%;background:white;border:2px solid rgba(232,35,26,0.3);border-radius:6px;padding:8px;font-family:'Barlow',sans-serif;font-size:14px;color:var(--text);outline:none"></select>
+        </div>
+        <div class="hist-edit-field" style="margin-bottom:0">
+          <label>Do</label>
+          <select id="histEditShiftTo" style="width:100%;background:white;border:2px solid rgba(232,35,26,0.3);border-radius:6px;padding:8px;font-family:'Barlow',sans-serif;font-size:14px;color:var(--text);outline:none"></select>
+        </div>
+      </div>
+      <button onclick="saveHistEditShift()" style="margin-top:8px;width:100%;background:var(--red);border:none;border-radius:6px;color:white;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;padding:8px;cursor:pointer;letter-spacing:1px">💾 Zapisz godziny</button>
     </div>
     <div class="hist-edit-btns">
       <button class="hist-edit-btn-cancel" onclick="closeHistEdit()">Anuluj</button>
@@ -1229,27 +1250,25 @@ window.addStop = async (restauracja) => {
   if (!addr) { showToast('Wpisz adres!'); return; }
   const kwota = paidState[p] ? null : (amtEl.value ? parseFloat(amtEl.value) : null);
 
-  // Admin: custom date and shift
+  // Admin: custom date (used as metadata on the stop, delivered via confirm flow)
   let createdAtVal = serverTimestamp();
-  let deliveredAtVal = null;
+  let adminDateStr = null;
   let stopTime = new Date().toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
   if (isAdmin) {
     const dateEl = document.getElementById(p+'AdminDate');
     const fromEl = document.getElementById(p+'AdminShiftFrom');
     const toEl = document.getElementById(p+'AdminShiftTo');
     if (dateEl && dateEl.value) {
+      adminDateStr = dateEl.value;
       const customDate = new Date(dateEl.value + 'T12:00:00');
       createdAtVal = Timestamp.fromDate(customDate);
-      deliveredAtVal = customDate.toISOString();
-      stopTime = '12:00';
-      // Save shift for that day if hours selected
+      // Save shift for that day if hours selected and not already saved
       const sf = parseInt(fromEl?.value);
       const st = parseInt(toEl?.value);
       if (!isNaN(sf) && !isNaN(st) && sf < st) {
-        const shiftKey = 'epShift_' + dateEl.value;
-        const existing = JSON.parse(localStorage.getItem(shiftKey) || 'null');
+        const existing = await getShiftForDate(adminDateStr);
         if (!existing) {
-          localStorage.setItem(shiftKey, JSON.stringify({ from: sf, to: st, hours: st - sf, earn: (st - sf) * (getRate() || 0) }));
+          await saveShiftForDate(adminDateStr, { from: sf, to: st, hours: st - sf });
         }
       }
     }
@@ -1261,15 +1280,13 @@ window.addStop = async (restauracja) => {
       note: noteEl.value.trim(), platnosc: payState[p], wolt: woltState[p],
       kwota, oplacone: paidState[p], delivered: false, createdAt: createdAtVal
     };
-    if (deliveredAtVal) { stopData.delivered = true; stopData.deliveredAt = deliveredAtVal; }
+    if (adminDateStr) stopData.adminDate = adminDateStr;
     const docRef = await addDoc(collection(db,'stops'), stopData);
-    if (!deliveredAtVal) {
-      stops[restauracja].push({
-        id: docRef.id, address: addr, note: noteEl.value.trim(),
-        platnosc: payState[p], wolt: woltState[p], kwota, oplacone: paidState[p], delivered: false,
-        time: stopTime
-      });
-    }
+    stops[restauracja].push({
+      id: docRef.id, address: addr, note: noteEl.value.trim(),
+      platnosc: payState[p], wolt: woltState[p], kwota, oplacone: paidState[p], delivered: false,
+      adminDate: adminDateStr, time: stopTime
+    });
     addrEl.value=''; noteEl.value=''; amtEl.value='';
     if (paidState[p]) {
       paidState[p]=false;
@@ -1313,6 +1330,9 @@ function renderStops(restauracja) {
   document.getElementById(p+'PlanBtn').disabled = active===0;
   const totalActive = stops.epicka.filter(s=>!s.delivered).length + stops.tajska.filter(s=>!s.delivered).length;
   document.getElementById('headerCounter').textContent = `${totalActive} PRZYSTANKÓW`;
+  // Show "deliver all" button only for admin when there are active stops
+  const deliverAllBtn = document.getElementById(p+'DeliverAllBtn');
+  if (deliverAllBtn) deliverAllBtn.style.display = (isAdmin && active > 0) ? '' : 'none';
 
   if (!arr.length) {
     list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg><p>Brak adresów.<br>Wpisz adres powyżej<br>i dodaj do trasy.</p></div>`;
@@ -1370,6 +1390,20 @@ function renderStops(restauracja) {
 }
 
 // ─── DELIVER ───
+window.deliverAll = async (restauracja) => {
+  const active = stops[restauracja].filter(s => !s.delivered);
+  if (!active.length) return;
+  if (!confirm(`Oznaczyć wszystkie ${active.length} przystanki jako dostarczone?`)) return;
+  for (const s of active) {
+    const deliveredAt = s.adminDate ? new Date(s.adminDate + 'T12:00:00').toISOString() : new Date().toISOString();
+    try { await updateDoc(doc(db,'stops',s.id), {delivered:true, deliveredAt}); } catch(e){}
+  }
+  stops[restauracja] = [];
+  renderStops(restauracja);
+  showToast(`✓ ${active.length} dostaw oznaczonych`);
+  launchConfetti();
+};
+
 window.askDeliver = (id, restauracja) => {
   const s = stops[restauracja].find(s=>s.id===id);
   if (!s) return;
@@ -1383,7 +1417,8 @@ window.confirmDeliver = async () => {
   const {id,restauracja}=pendingDeliver; closeDialog();
   const idx=stops[restauracja].findIndex(s=>s.id===id);
   if (idx===-1) return;
-  const deliveredAt = new Date().toISOString();
+  const s = stops[restauracja].find(s=>s.id===id);
+  const deliveredAt = s?.adminDate ? new Date(s.adminDate + 'T12:00:00').toISOString() : new Date().toISOString();
   try { await updateDoc(doc(db,'stops',id),{delivered:true, deliveredAt}); } catch(e){}
   // Remove from active list immediately
   stops[restauracja].splice(idx,1);
@@ -1767,7 +1802,7 @@ async function renderHistoria() {
           ${amtStr}
           <div class="history-stop-pay">${i.oplacone ? '<span style=\"color:var(--green);font-weight:700\">OPŁACONE</span>' : (i.platnosc === 'WOLT' ? 'GOTÓWKA' : i.platnosc)}${(i.wolt||i.platnosc==='WOLT')?', <span style=\"color:#009DE0;font-weight:700\">WOLT</span>':''}</div>
         </div>
-        <button class="hist-edit-btn" onclick="openHistEdit('${i.id}','${(i.address||'').replace(/'/g,"\'")}','${(i.note||'').replace(/'/g,"\'")}','${i.platnosc}',${i.kwota!=null?i.kwota:'null'},${i.oplacone?'true':'false'})"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
+        <button class="hist-edit-btn" onclick="openHistEdit('${i.id}','${(i.address||'').replace(/'/g,"\'")}','${(i.note||'').replace(/'/g,"\'")}','${i.platnosc}',${i.kwota!=null?i.kwota:'null'},${i.oplacone?'true':'false'},'${i._date?.toISOString?.().slice(0,10)||''}')"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
         <button class="hist-del-btn" onclick="deleteHistStop('${i.id}')"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
       </div>`;
     }).join('');
@@ -1853,12 +1888,22 @@ window.showToast = (msg) => {
 // ─── HIST EDIT ───
 let histEditId = null;
 let histEditPay = 'Gotówka';
-
+let histEditDateStr = null;
 let histEditOplacone = false;
 
-window.openHistEdit = (id, addr, note, platnosc, kwota, oplacone) => {
+window.saveHistEditShift = async () => {
+  if (!histEditDateStr) { showToast('Brak daty dla tej dostawy'); return; }
+  const from = parseInt(document.getElementById('histEditShiftFrom').value);
+  const to = parseInt(document.getElementById('histEditShiftTo').value);
+  if (isNaN(from) || isNaN(to) || from >= to) { showToast('Nieprawidłowy zakres godzin'); return; }
+  await saveShiftForDate(histEditDateStr, { from, to, hours: to - from });
+  showToast('Godziny zapisane ✓');
+};
+
+window.openHistEdit = async (id, addr, note, platnosc, kwota, oplacone, dateStr) => {
   histEditId = id;
   histEditPay = platnosc;
+  histEditDateStr = dateStr || null;
   histEditOplacone = oplacone === true || oplacone === 'true';
   document.getElementById('histEditAddr').value = addr;
   document.getElementById('histEditNote').value = note;
@@ -1869,6 +1914,29 @@ window.openHistEdit = (id, addr, note, platnosc, kwota, oplacone) => {
   });
   const paidBtn = document.getElementById('histEditPaidBtn');
   if (paidBtn) paidBtn.classList.toggle('active', histEditOplacone);
+  // Admin: show shift edit section
+  const shiftRow = document.getElementById('histEditShiftRow');
+  if (shiftRow) {
+    shiftRow.style.display = isAdmin ? 'block' : 'none';
+    if (isAdmin && dateStr) {
+      const fromSel = document.getElementById('histEditShiftFrom');
+      const toSel = document.getElementById('histEditShiftTo');
+      if (fromSel && !fromSel.options.length) {
+        for (let h = 12; h <= 23; h++) {
+          fromSel.innerHTML += `<option value="${h}">${h}:00</option>`;
+          toSel.innerHTML += `<option value="${h}">${h}:00</option>`;
+        }
+      }
+      const shift = await getShiftForDate(dateStr);
+      if (shift && !shift.disabled) {
+        fromSel.value = shift.from;
+        toSel.value = shift.to;
+      } else {
+        fromSel.value = 16;
+        toSel.value = 22;
+      }
+    }
+  }
   document.getElementById('histEditOverlay').classList.add('show');
 };
 
