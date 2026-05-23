@@ -396,11 +396,36 @@
   .stay-btn.no { background: var(--cream-dark); color: var(--text); border: 2px solid var(--border); }
   .stay-btn.yes { background: var(--red); color: white; }
   .stay-btn:active { opacity: 0.85; }
+
+  /* ─── SPLASH SCREEN ─── */
+  #splash-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--cream);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px;
+    transition: opacity 0.4s ease;
+  }
+  #splash-screen.fade-out { opacity: 0; pointer-events: none; }
+  #splash-screen.hidden { display: none; }
+  .splash-logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 48px; color: var(--red); letter-spacing: 4px; line-height: 1; }
+  .splash-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 4px; color: var(--muted); text-transform: uppercase; }
+  .splash-spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--red); border-radius: 50%; animation: spin 0.7s linear infinite; margin-top: 8px; }
+  .splash-checker { position: absolute; top: 0; left: 0; right: 0; height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
+  .splash-checker-bottom { position: absolute; bottom: 0; left: 0; right: 0; height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
 </style>
 </head>
 <body>
 
-<div id="auth-screen">
+<div id="splash-screen">
+  <div class="splash-checker"></div>
+  <div class="splash-logo">EPICKA</div>
+  <div class="splash-sub">Dostawa</div>
+  <div class="splash-spinner"></div>
+  <div class="splash-checker-bottom"></div>
+</div>
+
+<div id="auth-screen" style="display:none">
   <div class="auth-card">
     <div class="auth-checker"></div>
     <div class="auth-logo">EPICKA<span>DOSTAWA</span></div>
@@ -922,6 +947,24 @@
   </button>
 </div>
 
+<script>
+  // Show app skeleton immediately if user was previously logged in
+  // This eliminates the flash of auth screen
+  (function() {
+    try {
+      // Firebase stores auth state in indexedDB/localStorage
+      // We use our own flag to show app immediately
+      const wasLoggedIn = localStorage.getItem('epWasLoggedIn') === '1';
+      const savedDark = localStorage.getItem('epDarkMode');
+      if (savedDark === '1') document.body.classList.add('dark');
+      if (wasLoggedIn) {
+        document.getElementById('app').style.display = 'block';
+        document.getElementById('auth-screen').style.display = 'none';
+      }
+    } catch(e) {}
+  })();
+</script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, setPersistence, browserLocalPersistence, browserSessionPersistence, signOut as fbSignOut, onAuthStateChanged }
@@ -1147,7 +1190,10 @@ window.signInWithGoogle = async () => {
     }
   }
 };
-window.doSignOut = async () => { await fbSignOut(auth); };
+window.doSignOut = async () => {
+  localStorage.removeItem('epWasLoggedIn');
+  await fbSignOut(auth);
+};
 
 // Set persistence based on saved pref BEFORE signing in
 const _pref = localStorage.getItem('epStayLogged');
@@ -1155,9 +1201,17 @@ setPersistence(auth, _pref === '0' ? browserSessionPersistence : browserLocalPer
   .catch(() => {});
 
 let _firstLogin = true;
+function hideSplash() {
+  const splash = document.getElementById('splash-screen');
+  if (!splash || splash.classList.contains('hidden')) return;
+  splash.classList.add('fade-out');
+  setTimeout(() => splash.classList.add('hidden'), 400);
+}
+
 onAuthStateChanged(auth, async user => {
   currentUser = user;
   if (user) {
+    localStorage.setItem('epWasLoggedIn', '1');
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     document.getElementById('userName').textContent = user.displayName?.split(' ')[0] || '';
@@ -1188,9 +1242,11 @@ onAuthStateChanged(auth, async user => {
         setTimeout(showStayDialog, 800);
       }
     }
+    hideSplash();
   } else {
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
+    hideSplash();
   }
 });
 
