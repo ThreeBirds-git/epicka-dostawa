@@ -382,6 +382,15 @@
   .admin-date-input:focus, .admin-date-select:focus { border-color: var(--red); }
   body.dark .admin-date-input, body.dark .admin-date-select { background: #222; color: #f0f0f0; }
 
+  /* Shift inactive state */
+  .shift-inactive .input-card { opacity: 0.45; pointer-events: none; user-select: none; }
+  .shift-inactive .plan-btn { display: none !important; }
+  .start-shift-btn { background: var(--red); border: none; border-radius: 8px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; width: 100%; padding: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 3px 0 rgba(0,0,0,0.2); transition: all 0.15s; }
+  .start-shift-btn:active { opacity: 0.85; box-shadow: 0 1px 0 rgba(0,0,0,0.2); transform: translateY(2px); }
+  .start-shift-btn svg { width: 22px; height: 22px; fill: white; }
+  .end-shift-btn { background: var(--red); border: none; border-radius: 4px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1px; padding: 4px 8px; cursor: pointer; white-space: nowrap; }
+  .end-shift-btn:active { opacity: 0.8; }
+
   /* Stay logged in dialog */
   .stay-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 700; display: none; align-items: center; justify-content: center; padding: 20px; }
   .stay-overlay.show { display: flex; }
@@ -443,7 +452,10 @@
   <div class="header-inner">
     <div class="logo">EPICKA<span>DOSTAWA</span></div>
     <div class="header-right">
-      <div class="shift-badge" id="shiftBadge" onclick="openShiftPopup()" title="Zmiana" style="display:none"></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="shift-badge" id="shiftBadge" style="display:none"></div>
+        <button class="end-shift-btn" id="endShiftBtn" onclick="endShift()" style="display:none">ZAKOŃCZ</button>
+      </div>
       <div class="header-counter" id="headerCounter">0 PRZYSTANKÓW</div>
       <div class="header-user">
         <img class="avatar" id="userAvatar" src="" alt="">
@@ -536,6 +548,10 @@
       <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
       ZAPLANUJ TRASĘ
     </button>
+    <button class="start-shift-btn" id="eStartShiftBtn" onclick="openShiftPopup()" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      ROZPOCZNIJ ZMIANĘ
+    </button>
   </div>
 </div>
 
@@ -598,6 +614,10 @@
     <button class="plan-btn" id="tPlanBtn" onclick="planRoute('tajska')" disabled>
       <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
       ZAPLANUJ TRASĘ
+    </button>
+    <button class="start-shift-btn" id="tStartShiftBtn" onclick="openShiftPopup()" style="display:none">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      ROZPOCZNIJ ZMIANĘ
     </button>
   </div>
 </div>
@@ -737,15 +757,15 @@
     <div id="shiftTimeRows">
       <div class="shift-row">
         <span class="shift-label">Od</span>
-        <select class="shift-select" id="shiftFrom"></select>
+        <input type="time" class="shift-select" id="shiftFrom" value="16:00" style="font-size:18px;font-weight:700;padding:10px 12px">
       </div>
       <div class="shift-row">
         <span class="shift-label">Do</span>
-        <select class="shift-select" id="shiftTo"></select>
+        <input type="time" class="shift-select" id="shiftTo" value="22:00" style="font-size:18px;font-weight:700;padding:10px 12px">
       </div>
     </div>
     <div class="shift-error" id="shiftError"></div>
-    <button class="shift-btn" onclick="saveShift()">Zacznij zmianę</button>
+    <button class="shift-btn" onclick="saveShift()">Rozpocznij zmianę</button>
   </div>
 </div>
 
@@ -1052,24 +1072,57 @@ function getMaxHour() {
 }
 
 function buildShiftOptions() {
-  const maxH = getMaxHour();
-  const fromSel = document.getElementById('shiftFrom');
-  const toSel = document.getElementById('shiftTo');
-  fromSel.innerHTML = '';
-  toSel.innerHTML = '';
-  for (let h = 12; h <= maxH; h++) {
-    const val = h + ':00';
-    fromSel.innerHTML += `<option value="${h}">${val}</option>`;
-    toSel.innerHTML += `<option value="${h}">${val}</option>`;
-  }
-  toSel.value = maxH;
-  document.getElementById('shiftSubText').textContent = `Zakres: 12:00 – ${maxH}:00`;
+  // Set default times
+  const fromEl = document.getElementById('shiftFrom');
+  const toEl = document.getElementById('shiftTo');
+  if (fromEl && !fromEl.value) fromEl.value = '16:00';
+  if (toEl && !toEl.value) toEl.value = '22:00';
+  document.getElementById('shiftSubText').textContent = 'Ustaw godziny swojej zmiany';
   // Show admin checkbox if admin
   const adminRow = document.getElementById('shiftAdminOffRow');
   if (adminRow) adminRow.style.display = isAdmin ? 'flex' : 'none';
   // Reset checkbox
   const cb = document.getElementById('shiftDayOff');
   if (cb) { cb.checked = false; toggleShiftDayOff(false); }
+}
+
+function setShiftActive(shift) {
+  // Unlock forms
+  document.querySelectorAll('#tab-epicka, #tab-tajska').forEach(t => t.classList.remove('shift-inactive'));
+  // Hide start buttons, show plan buttons
+  ['e','t'].forEach(p => {
+    const startBtn = document.getElementById(p+'StartShiftBtn');
+    if (startBtn) startBtn.style.display = 'none';
+  });
+  // Show badge and end button
+  const badge = document.getElementById('shiftBadge');
+  const endBtn = document.getElementById('endShiftBtn');
+  if (badge && shift && !shift.disabled) {
+    badge.style.display = '';
+    badge.style.opacity = '1';
+    // Format time from HH:MM string or from/to numbers
+    if (shift.fromStr) {
+      badge.textContent = shift.fromStr + ' – ' + shift.toStr;
+    } else {
+      badge.textContent = shift.from + ':00 – ' + shift.to + ':00';
+    }
+  }
+  if (endBtn) endBtn.style.display = '';
+}
+
+function setShiftInactive() {
+  // Lock forms
+  document.querySelectorAll('#tab-epicka, #tab-tajska').forEach(t => t.classList.add('shift-inactive'));
+  // Show start buttons, hide plan buttons handled by CSS
+  ['e','t'].forEach(p => {
+    const startBtn = document.getElementById(p+'StartShiftBtn');
+    if (startBtn) startBtn.style.display = '';
+  });
+  // Hide badge and end button
+  const badge = document.getElementById('shiftBadge');
+  const endBtn = document.getElementById('endShiftBtn');
+  if (badge) badge.style.display = 'none';
+  if (endBtn) endBtn.style.display = 'none';
 }
 
 window.toggleShiftDayOff = (checked) => {
@@ -1089,40 +1142,36 @@ function openShiftPopup() {
 window.saveShift = async () => {
   const dayOff = document.getElementById('shiftDayOff')?.checked;
   if (dayOff) {
-    await saveShiftForDate(todayDateStr(), { disabled: true });
+    const shift = { disabled: true };
+    await saveShiftForDate(todayDateStr(), shift);
     document.getElementById('shiftOverlay').classList.remove('show');
-    updateShiftBadge({ disabled: true });
+    setShiftInactive();
     showToast('Dzień wolny zapisany ✓');
     return;
   }
-  const from = parseInt(document.getElementById('shiftFrom').value);
-  const to = parseInt(document.getElementById('shiftTo').value);
-  const maxH = getMaxHour();
+  const fromStr = document.getElementById('shiftFrom').value; // "HH:MM"
+  const toStr = document.getElementById('shiftTo').value;
   const errEl = document.getElementById('shiftError');
-  if (isNaN(from) || isNaN(to)) { errEl.textContent = 'Wpisz poprawny czas zmiany'; return; }
-  if (from < 12 || to > maxH || from >= to) {
-    errEl.textContent = `Czas zmiany poza zakresem (12:00–${maxH}:00)`; return;
-  }
-  const shift = { from, to, hours: to - from };
+  if (!fromStr || !toStr) { errEl.textContent = 'Wpisz godziny zmiany'; return; }
+  const [fH, fM] = fromStr.split(':').map(Number);
+  const [tH, tM] = toStr.split(':').map(Number);
+  const fromMins = fH * 60 + fM;
+  const toMins = tH * 60 + tM;
+  if (fromMins >= toMins) { errEl.textContent = 'Godzina końca musi być po starcie'; return; }
+  const hours = (toMins - fromMins) / 60;
+  const shift = { fromStr, toStr, from: fH, to: tH, hours };
   await saveShiftForDate(todayDateStr(), shift);
   document.getElementById('shiftOverlay').classList.remove('show');
-  updateShiftBadge(shift);
-  showToast('Zmiana zapisana ✓');
+  setShiftActive(shift);
+  showToast('Zmiana rozpoczęta ✓');
 };
 
 function updateShiftBadge(shift) {
-  const badge = document.getElementById('shiftBadge');
-  if (!badge) return;
+  // Delegate to new active/inactive system
   if (shift && !shift.disabled) {
-    badge.style.display = '';
-    badge.style.opacity = '1';
-    badge.textContent = shift.from + ':00–' + shift.to + ':00';
-  } else if (shift && shift.disabled) {
-    badge.style.display = '';
-    badge.style.opacity = '0.5';
-    badge.textContent = '🚫 Wolne';
+    setShiftActive(shift);
   } else {
-    badge.style.display = 'none';
+    setShiftInactive();
   }
 }
 
@@ -1159,11 +1208,16 @@ async function checkAndShowPopups() {
     return;
   }
   const shift = await getTodayShift();
-  if (!shift) {
-    openShiftPopup();
-    return;
+  if (shift && !shift.disabled) {
+    setShiftActive(shift);
+  } else if (shift && shift.disabled) {
+    setShiftInactive();
+  } else {
+    // No shift today — show inactive state, user clicks ROZPOCZNIJ
+    setShiftInactive();
   }
-  updateShiftBadge(shift);
+  // Schedule auto-end at midnight
+  scheduleAutoEndShift();
 }
 let woltState = { e: false, t: false }; // WOLT is independent toggle
 let paidState = { e: false, t: false };
@@ -1899,7 +1953,7 @@ async function renderHistoria() {
   const uniqueDays = [...new Set(items.map(o => o._date?.toISOString?.().slice(0,10) || ''))].filter(Boolean);
   await Promise.all(uniqueDays.map(async day => {
     const shift = await getShiftForDate(day);
-    if (shift && !shift.disabled) { stats.shiftHours += shift.hours; stats.shiftEarn += shift.hours * rate; }
+    if (shift && !shift.disabled && shift.hours) { stats.shiftHours += shift.hours; stats.shiftEarn += shift.hours * rate; }
   }));
 
   summaryEl.innerHTML = items.length === 0 ? '' : `
@@ -2004,6 +2058,56 @@ async function renderHistoria() {
 }
 
 window.toggleHistDay = (el) => { el.classList.toggle('open'); };
+
+// ─── SHIFT END LOGIC ───
+let _autoEndTimer = null;
+
+function scheduleAutoEndShift() {
+  if (_autoEndTimer) clearTimeout(_autoEndTimer);
+  const now = new Date();
+  const midnight = new Date();
+  midnight.setHours(24, 0, 0, 0);
+  const msToMidnight = midnight - now;
+  _autoEndTimer = setTimeout(async () => {
+    const shift = await getTodayShift();
+    if (shift && !shift.disabled) {
+      // Auto-end: set toStr to current time
+      const now2 = new Date();
+      const toStr = now2.getHours().toString().padStart(2,'0') + ':' + now2.getMinutes().toString().padStart(2,'0');
+      const [tH, tM] = toStr.split(':').map(Number);
+      const fromMins = shift.from * 60 + (shift.fromStr ? parseInt(shift.fromStr.split(':')[1]) : 0);
+      const toMins = tH * 60 + tM;
+      const hours = Math.max(0, (toMins - fromMins) / 60);
+      await saveShiftForDate(todayDateStr(), { ...shift, toStr, to: tH, hours });
+    }
+    setShiftInactive();
+  }, msToMidnight);
+}
+
+window.endShift = async () => {
+  // Check for active stops
+  const totalActive = stops.epicka.filter(s => !s.delivered).length + stops.tajska.filter(s => !s.delivered).length;
+  if (totalActive > 0) {
+    showToast('Masz aktywne przystanki. Zakończ je żeby zakończyć zmianę.');
+    return;
+  }
+  if (!confirm('Zakończyć zmianę?')) return;
+  // Update shift end time to now
+  const shift = await getTodayShift();
+  if (shift && !shift.disabled) {
+    const now = new Date();
+    const toStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    const [tH, tM] = toStr.split(':').map(Number);
+    const fromMins = shift.from * 60 + (shift.fromStr ? parseInt(shift.fromStr.split(':')[1]) : 0);
+    const toMins = tH * 60 + tM;
+    const hours = Math.max(0, (toMins - fromMins) / 60);
+    await saveShiftForDate(todayDateStr(), { ...shift, toStr, to: tH, hours });
+  }
+  if (_autoEndTimer) clearTimeout(_autoEndTimer);
+  setShiftInactive();
+  showToast('Zmiana zakończona ✓');
+  _histCache = null;
+};
 
 // ─── ADMIN SHIFT EDIT ───
 let _shiftEditDate = null;
