@@ -31,7 +31,7 @@
   body.dark .auth-card { background: #181818; }
   body.dark .settings-panel { background: #181818; }
   body.dark .settings-overlay { background: rgba(0,0,0,0.7); }
-  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; padding-top: 102px; }
+  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; padding-top: 110px; }
 
   /* ─── ADMIN ADD STOP FORM ─── */
   .admin-add-form { background: var(--cream-dark); border-radius: 10px; padding: 16px; margin-top: 12px; display: none; flex-direction: column; gap: 10px; }
@@ -78,14 +78,16 @@
     .rest-hero-tajska { font-size: 48px; }
     .bottom-checker { display: none; }
     .plan-btn { position: sticky; bottom: 0; }
-    .tabs { top: var(--header-h, 56px); }
-    body { padding-top: calc(var(--header-h, 56px) + 46px); }
+    .tabs { top: 64px; }
+    body { padding-top: 110px; }
   }
   .checker { height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
-  header { background: var(--cream); position: fixed; top: 0; left: 0; right: 0; z-index: 400; box-shadow: 0 2px 0 var(--border); }
-  .header-row1 { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; }
-  .header-row2 { display: flex; align-items: center; gap: 8px; padding: 6px 14px 10px; border-top: 1px solid var(--border); }
-  .header-row2 .header-counter { margin-left: auto; }
+  header { background: var(--cream); position: fixed; top: 0; left: 0; right: 0; z-index: 400; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+  .header-row1 { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; min-height: 54px; }
+  .header-row2 { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--cream); border-top: 1px solid var(--border); }
+  .header-row2 .shift-badge { font-size: 13px; }
+  .header-row2 .header-counter { margin-left: auto; flex-shrink: 0; }
+  /* row CSS moved to header block */
 /* header-inner replaced by row1/row2 */
   .logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 28px; color: var(--red); letter-spacing: 2px; line-height: 1; }
   .logo span { font-size: 12px; display: block; font-weight: 700; letter-spacing: 3px; color: var(--muted); margin-top: -1px; }
@@ -96,7 +98,7 @@
   .user-name { font-size: 12px; font-weight: 600; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; }
   .signout-btn { background: none; border: 1.5px solid var(--border); border-radius: 4px; color: var(--muted); font-family: 'Barlow', sans-serif; font-size: 11px; padding: 3px 8px; cursor: pointer; }
   .signout-btn:active { background: var(--border); }
-  .tabs { display: flex; background: var(--cream-dark); border-bottom: 2px solid var(--red); position: fixed; top: 56px; left: 0; right: 0; z-index: 399; }
+  .tabs { display: flex; background: var(--cream-dark); border-bottom: 2px solid var(--red); position: fixed; top: 64px; left: 0; right: 0; z-index: 399; }
   .tab { flex: 1; padding: 11px 6px; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .tab svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
   .tab.active { color: var(--active-tab); border-bottom-color: var(--active-tab); background: var(--cream); }
@@ -1152,10 +1154,10 @@ function setShiftActive(shift) {
     const toStr = shift.toStr || (shift.to + ':00');
     badge.textContent = fromStr + ' – ' + toStr;
   }
-  // Adjust tabs and body for two-row header (~96px header)
+  // Two-row header: checker(10) + row1(54) + row2(52) = 116px to bottom of header
   const tabsEl = document.querySelector('.tabs');
-  if (tabsEl) tabsEl.style.top = '96px';
-  document.body.style.paddingTop = '140px';
+  if (tabsEl) tabsEl.style.top = '116px';
+  document.body.style.paddingTop = '160px';
 }
 
 
@@ -1167,7 +1169,7 @@ function setShiftInactive() {
   });
   const row2 = document.getElementById('headerRow2');
   if (row2) row2.style.display = 'none';
-  // Reset to single-row header
+  // Single-row header: checker(10) + row1(54) = 64px
   const tabsEl = document.querySelector('.tabs');
   if (tabsEl) tabsEl.style.top = '';
   document.body.style.paddingTop = '';
