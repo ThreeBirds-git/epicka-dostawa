@@ -31,7 +31,7 @@
   body.dark .auth-card { background: #181818; }
   body.dark .settings-panel { background: #181818; }
   body.dark .settings-overlay { background: rgba(0,0,0,0.7); }
-  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; padding-top: 120px; }
+  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; padding-top: 134px; }
 
   /* ─── ADMIN ADD STOP FORM ─── */
   .admin-add-form { background: var(--cream-dark); border-radius: 10px; padding: 16px; margin-top: 12px; display: none; flex-direction: column; gap: 10px; }
@@ -85,7 +85,11 @@
   }
   .checker { height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
   header { background: var(--cream); position: fixed; top: 0; left: 0; right: 0; z-index: 400; box-shadow: 0 2px 0 var(--border); }
-  .header-inner { padding: 10px 16px 12px; display: flex; align-items: center; gap: 10px; }
+  .header-row1 { display: flex; align-items: center; padding: 8px 12px 8px 16px; gap: 8px; }
+  .header-row2 { display: flex; align-items: center; padding: 0 12px 8px 16px; gap: 8px; border-top: 1px solid var(--border); }
+  .header-row2 .shift-badge { font-size: 13px; font-weight: 700; }
+  .header-row2 .header-counter { margin-left: auto; }
+/* header-inner replaced by row1/row2 */
   .logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 28px; color: var(--red); letter-spacing: 2px; line-height: 1; }
   .logo span { font-size: 12px; display: block; font-weight: 700; letter-spacing: 3px; color: var(--muted); margin-top: -1px; }
   .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
@@ -95,7 +99,7 @@
   .user-name { font-size: 12px; font-weight: 600; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; }
   .signout-btn { background: none; border: 1.5px solid var(--border); border-radius: 4px; color: var(--muted); font-family: 'Barlow', sans-serif; font-size: 11px; padding: 3px 8px; cursor: pointer; }
   .signout-btn:active { background: var(--border); }
-  .tabs { display: flex; background: var(--cream-dark); border-bottom: 2px solid var(--red); position: fixed; top: 72px; left: 0; right: 0; z-index: 399; }
+  .tabs { display: flex; background: var(--cream-dark); border-bottom: 2px solid var(--red); position: fixed; top: 88px; left: 0; right: 0; z-index: 399; }
   .tab { flex: 1; padding: 11px 6px; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .tab svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
   .tab.active { color: var(--active-tab); border-bottom-color: var(--active-tab); background: var(--cream); }
@@ -471,24 +475,24 @@
 <div id="app" style="display:none;position:relative;z-index:0">
 <header>
   <div class="checker"></div>
-  <div class="header-inner">
+  <div class="header-row1">
     <div class="logo">EPICKA<span>DOSTAWA</span></div>
-    <div class="header-right">
-      <div class="shift-badge" id="shiftBadge" onclick="openShiftPopup()" title="Edytuj godziny" style="display:none;cursor:pointer"></div>
-      <button class="end-shift-btn" id="endShiftBtn" onclick="endShift()" style="display:none">ZAKOŃCZ</button>
-      <div class="header-counter" id="headerCounter">0 PRZYSTANKÓW</div>
-      <div class="header-user">
-        <img class="avatar" id="userAvatar" src="" alt="">
-        <span class="user-name" id="userName"></span>
-        <button class="gear-btn" onclick="openSettings()" title="Ustawienia">
-          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-        </button>
-        <button class="signout-btn" onclick="doSignOut()">Wyloguj</button>
-      </div>
-      <button class="hamburger-btn" onclick="openHamburgerMenu()" title="Menu">
-        <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    <div class="header-user">
+      <img class="avatar" id="userAvatar" src="" alt="">
+      <span class="user-name" id="userName"></span>
+      <button class="gear-btn" onclick="openSettings()" title="Ustawienia">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
       </button>
+      <button class="signout-btn" onclick="doSignOut()">Wyloguj</button>
     </div>
+    <button class="hamburger-btn" onclick="openHamburgerMenu()" title="Menu">
+      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+  </div>
+  <div class="header-row2" id="headerRow2" style="display:none">
+    <div class="shift-badge" id="shiftBadge" onclick="openShiftPopup()" title="Edytuj godziny" style="cursor:pointer"></div>
+    <button class="end-shift-btn" id="endShiftBtn" onclick="endShift()">ZAKOŃCZ</button>
+    <div class="header-counter" id="headerCounter">0 PRZYSTANKÓW</div>
   </div>
 </header>
 
@@ -786,8 +790,11 @@
 
 <div class="shift-overlay" id="shiftOverlay">
   <div class="shift-panel">
-    <div class="shift-title">🕐 Czas zmiany</div>
-    <div class="shift-sub" id="shiftSubText">Wpisz godziny dzisiejszej zmiany</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div class="shift-title" style="margin-bottom:0">🕐 Czas zmiany</div>
+      <button id="shiftCloseBtn" onclick="closeShiftPopup()" style="display:none;background:none;border:none;font-size:26px;line-height:1;cursor:pointer;color:var(--muted);padding:0">×</button>
+    </div>
+    <div class="shift-sub" id="shiftSubText">Ustaw godziny swojej zmiany</div>
     <div id="shiftAdminOffRow" style="display:none;align-items:center;gap:10px;margin-bottom:14px;padding:10px 12px;background:rgba(232,35,26,0.07);border-radius:8px;border:1.5px solid rgba(232,35,26,0.2)">
       <input type="checkbox" id="shiftDayOff" style="width:18px;height:18px;accent-color:var(--red);cursor:pointer;flex-shrink:0" onchange="toggleShiftDayOff(this.checked)">
       <label for="shiftDayOff" style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--red);cursor:pointer">Dzisiaj nie pracuję</label>
@@ -803,7 +810,7 @@
       </div>
     </div>
     <div class="shift-error" id="shiftError"></div>
-    <button class="shift-btn" onclick="saveShift()">Rozpocznij zmianę</button>
+    <button class="shift-btn" id="shiftSaveBtn" onclick="saveShift()">Rozpocznij zmianę</button>
   </div>
 </div>
 
@@ -1134,82 +1141,32 @@ function buildShiftOptions() {
 }
 
 function setShiftActive(shift) {
-  // Unlock forms
   document.querySelectorAll('#tab-epicka, #tab-tajska').forEach(t => t.classList.remove('shift-inactive'));
-  // Hide start buttons, show plan buttons
   ['e','t'].forEach(p => {
-    const startBtn = document.getElementById(p+'StartShiftBtn');
-    if (startBtn) startBtn.style.display = 'none';
+    const sb = document.getElementById(p+'StartShiftBtn');
+    if (sb) sb.style.display = 'none';
   });
-  // Show badge and end button
+  const row2 = document.getElementById('headerRow2');
   const badge = document.getElementById('shiftBadge');
-  const endBtn = document.getElementById('endShiftBtn');
+  if (row2) row2.style.display = 'flex';
   if (badge && shift && !shift.disabled) {
-    badge.style.display = '';
-    badge.style.opacity = '1';
-    // Format time from HH:MM string or from/to numbers
-    if (shift.fromStr) {
-      badge.textContent = shift.fromStr + ' – ' + shift.toStr;
-    } else {
-      badge.textContent = shift.from + ':00 – ' + shift.to + ':00';
-    }
+    const fromStr = shift.fromStr || (shift.from + ':00');
+    const toStr = shift.toStr || (shift.to + ':00');
+    badge.textContent = fromStr + ' – ' + toStr;
   }
-  if (endBtn) endBtn.style.display = '';
 }
+
 
 function setShiftInactive() {
   document.querySelectorAll('#tab-epicka, #tab-tajska').forEach(t => t.classList.add('shift-inactive'));
-  // Bottom start buttons hidden - hero block is used instead
   ['e','t'].forEach(p => {
-    const startBtn = document.getElementById(p+'StartShiftBtn');
-    if (startBtn) startBtn.style.display = 'none';
+    const sb = document.getElementById(p+'StartShiftBtn');
+    if (sb) sb.style.display = 'none';
   });
-  const badge = document.getElementById('shiftBadge');
-  const endBtn = document.getElementById('endShiftBtn');
-  if (badge) badge.style.display = 'none';
-  if (endBtn) endBtn.style.display = 'none';
+  const row2 = document.getElementById('headerRow2');
+  if (row2) row2.style.display = 'none';
 }
 
-window.toggleShiftDayOff = (checked) => {
-  const timeRows = document.getElementById('shiftTimeRows');
-  if (timeRows) {
-    timeRows.style.opacity = checked ? '0.35' : '1';
-    timeRows.style.pointerEvents = checked ? 'none' : '';
-  }
-};
-
-function openShiftPopup() {
-  buildShiftOptions();
-  document.getElementById('shiftError').textContent = '';
-  document.getElementById('shiftOverlay').classList.add('show');
-}
-
-window.saveShift = async () => {
-  const dayOff = document.getElementById('shiftDayOff')?.checked;
-  if (dayOff) {
-    const shift = { disabled: true };
-    await saveShiftForDate(todayDateStr(), shift);
-    document.getElementById('shiftOverlay').classList.remove('show');
-    setShiftInactive();
-    showToast('Dzień wolny zapisany ✓');
-    return;
-  }
-  const fromStr = document.getElementById('shiftFrom').value; // "HH:MM"
-  const toStr = document.getElementById('shiftTo').value;
-  const errEl = document.getElementById('shiftError');
-  if (!fromStr || !toStr) { errEl.textContent = 'Wpisz godziny zmiany'; return; }
-  const [fH, fM] = fromStr.split(':').map(Number);
-  const [tH, tM] = toStr.split(':').map(Number);
-  const fromMins = fH * 60 + fM;
-  const toMins = tH * 60 + tM;
-  if (fromMins >= toMins) { errEl.textContent = 'Godzina końca musi być po starcie'; return; }
-  const hours = (toMins - fromMins) / 60;
-  const shift = { fromStr, toStr, from: fH, to: tH, hours };
-  await saveShiftForDate(todayDateStr(), shift);
-  document.getElementById('shiftOverlay').classList.remove('show');
-  setShiftActive(shift);
-  showToast('Zmiana rozpoczęta ✓');
-};
 
 function updateShiftBadge(shift) {
   // Delegate to new active/inactive system
@@ -1243,6 +1200,30 @@ window.saveRateFromSettings = () => {
   saveRateToFirestore(val);
   showToast('Stawka zaktualizowana ✓');
 };
+
+async function openShiftPopup() {
+  buildShiftOptions();
+  document.getElementById('shiftError').textContent = '';
+  const existing = await getTodayShift();
+  const isEdit = !!(existing && !existing.disabled);
+  const closeBtn = document.getElementById('shiftCloseBtn');
+  const saveBtn = document.getElementById('shiftSaveBtn');
+  const overlay = document.getElementById('shiftOverlay');
+  if (closeBtn) closeBtn.style.display = isEdit ? '' : 'none';
+  if (saveBtn) saveBtn.textContent = isEdit ? 'Zmień' : 'Rozpocznij zmianę';
+  if (isEdit && existing) {
+    const fromEl = document.getElementById('shiftFrom');
+    const toEl = document.getElementById('shiftTo');
+    if (fromEl && existing.fromStr) fromEl.value = existing.fromStr;
+    if (toEl && existing.toStr) toEl.value = existing.toStr;
+  }
+  if (overlay) overlay.onclick = isEdit ? (e) => { if (e.target === overlay) closeShiftPopup(); } : null;
+  overlay.classList.add('show');
+}
+
+function closeShiftPopup() {
+  document.getElementById('shiftOverlay').classList.remove('show');
+}
 
 window.openShiftPopup = openShiftPopup;
 
