@@ -31,7 +31,7 @@
   body.dark .auth-card { background: #181818; }
   body.dark .settings-panel { background: #181818; }
   body.dark .settings-overlay { background: rgba(0,0,0,0.7); }
-  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; padding-top: 114px; }
+  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; padding-top: 120px; }
 
   /* ─── ADMIN ADD STOP FORM ─── */
   .admin-add-form { background: var(--cream-dark); border-radius: 10px; padding: 16px; margin-top: 12px; display: none; flex-direction: column; gap: 10px; }
@@ -78,10 +78,10 @@
     .bottom-checker { display: none; }
     .plan-btn { position: sticky; bottom: 0; }
     .tabs { top: var(--header-h, 56px); }
-    body { padding-top: calc(var(--header-h, 56px) + 44px); }
+    body { padding-top: calc(var(--header-h, 56px) + 46px); }
   }
   .checker { height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
-  header { background: var(--cream); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 0 var(--border); }
+  header { background: var(--cream); position: fixed; top: 0; left: 0; right: 0; z-index: 400; box-shadow: 0 2px 0 var(--border); }
   .header-inner { padding: 10px 16px 12px; display: flex; align-items: center; gap: 10px; }
   .logo { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 28px; color: var(--red); letter-spacing: 2px; line-height: 1; }
   .logo span { font-size: 12px; display: block; font-weight: 700; letter-spacing: 3px; color: var(--muted); margin-top: -1px; }
@@ -92,7 +92,7 @@
   .user-name { font-size: 12px; font-weight: 600; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; }
   .signout-btn { background: none; border: 1.5px solid var(--border); border-radius: 4px; color: var(--muted); font-family: 'Barlow', sans-serif; font-size: 11px; padding: 3px 8px; cursor: pointer; }
   .signout-btn:active { background: var(--border); }
-  .tabs { display: flex; background: var(--cream-dark); border-bottom: 2px solid var(--red); position: sticky; top: 72px; z-index: 99; }
+  .tabs { display: flex; background: var(--cream-dark); border-bottom: 2px solid var(--red); position: fixed; top: 72px; left: 0; right: 0; z-index: 399; }
   .tab { flex: 1; padding: 11px 6px; background: none; border: none; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .tab svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
   .tab.active { color: var(--active-tab); border-bottom-color: var(--active-tab); background: var(--cream); }
@@ -767,7 +767,7 @@
     <div id="shiftTimeRows">
       <div class="shift-row">
         <span class="shift-label">Od</span>
-        <input type="time" class="shift-select" id="shiftFrom" value="16:00" style="font-size:18px;font-weight:700;padding:10px 12px">
+        <input type="time" class="shift-select" id="shiftFrom" value="12:00" style="font-size:18px;font-weight:700;padding:10px 12px">
       </div>
       <div class="shift-row">
         <span class="shift-label">Do</span>
@@ -1094,7 +1094,7 @@ function buildShiftOptions() {
   // Set default times
   const fromEl = document.getElementById('shiftFrom');
   const toEl = document.getElementById('shiftTo');
-  if (fromEl && !fromEl.value) fromEl.value = '16:00';
+  if (fromEl && !fromEl.value) fromEl.value = '12:00';
   if (toEl && !toEl.value) toEl.value = '22:00';
   document.getElementById('shiftSubText').textContent = 'Ustaw godziny swojej zmiany';
   // Show admin checkbox if admin
@@ -1239,8 +1239,12 @@ async function checkAndShowPopups() {
   scheduleAutoEndShift();
 }
 window.onStartShiftClick = async () => {
+  // Always fetch fresh from Firestore
+  const today = todayDateStr ? todayDateStr() : new Date().toISOString().slice(0,10);
+  if (typeof _shiftCache !== 'undefined') delete _shiftCache[today];
   const shift = await getTodayShift();
   if (shift && !shift.disabled) {
+    setShiftActive(shift);
     showWelcomePopup(shift);
   } else {
     openShiftPopup();
