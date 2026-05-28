@@ -69,6 +69,9 @@
     .hamburger-btn { display: flex; }
     .header-user { display: none !important; }
     .signout-btn { display: none !important; }
+    .header-counter { font-size: 10px; padding: 4px 8px; max-width: 110px; text-align: center; line-height: 1.2; }
+    .shift-badge { font-size: 11px; padding: 4px 6px; }
+    .end-shift-btn { font-size: 10px; padding: 4px 6px; }
   }
 
   /* ─── MOBILE APP LAYOUT ─── */
@@ -471,10 +474,8 @@
   <div class="header-inner">
     <div class="logo">EPICKA<span>DOSTAWA</span></div>
     <div class="header-right">
-      <div style="display:flex;align-items:center;gap:6px">
-        <div class="shift-badge" id="shiftBadge" onclick="openShiftPopup()" title="Edytuj godziny" style="display:none;cursor:pointer"></div>
-        <button class="end-shift-btn" id="endShiftBtn" onclick="endShift()" style="display:none">ZAKOŃCZ</button>
-      </div>
+      <div class="shift-badge" id="shiftBadge" onclick="openShiftPopup()" title="Edytuj godziny" style="display:none;cursor:pointer"></div>
+      <button class="end-shift-btn" id="endShiftBtn" onclick="endShift()" style="display:none">ZAKOŃCZ</button>
       <div class="header-counter" id="headerCounter">0 PRZYSTANKÓW</div>
       <div class="header-user">
         <img class="avatar" id="userAvatar" src="" alt="">
@@ -943,7 +944,7 @@
 <div class="welcome-overlay" id="welcomeOverlay">
   <div class="welcome-panel">
     <div class="welcome-title">🍕 Zmiana aktywna!</div>
-    <div class="welcome-sub">Witaj z powrotem. Do końca zmiany zostało:</div>
+    <div class="welcome-sub" id="welcomeSub">Witaj z powrotem. Do końca zmiany zostało:</div>
     <div class="welcome-countdown" id="welcomeCountdown">--:--</div>
     <button class="welcome-btn" onclick="closeWelcome()">ZACZYNAMY</button>
   </div>
@@ -2125,17 +2126,23 @@ let _welcomeTimer = null;
 function showWelcomePopup(shift) {
   const overlay = document.getElementById('welcomeOverlay');
   const countdown = document.getElementById('welcomeCountdown');
+  const sub = document.getElementById('welcomeSub');
   if (!overlay || !shift) return;
+  const fromStr = shift.fromStr || (shift.from + ':00');
+  const toStr = shift.toStr || (shift.to + ':00');
+  if (sub) sub.textContent = 'Zmiana ' + fromStr + ' – ' + toStr + '. Do końca zostało:';
   overlay.classList.add('show');
   if (_welcomeTimer) clearInterval(_welcomeTimer);
   function update() {
     const now = new Date();
-    const toStr = shift.toStr || (shift.to + ':00');
     const [tH, tM] = toStr.split(':').map(Number);
     const endMins = tH * 60 + tM;
     const nowMins = now.getHours() * 60 + now.getMinutes();
     const diff = endMins - nowMins;
-    if (diff <= 0) { countdown.textContent = 'Koniec!'; return; }
+    if (diff <= 0) {
+      countdown.textContent = 'Zmiana trwa!';
+      return;
+    }
     const h = Math.floor(diff / 60);
     const m = diff % 60;
     countdown.textContent = h + 'h ' + m.toString().padStart(2,'0') + 'min';
@@ -2175,28 +2182,16 @@ function scheduleAutoEndShift() {
 }
 
 window.endShift = async () => {
-  // Check for active stops
   const totalActive = stops.epicka.filter(s => !s.delivered).length + stops.tajska.filter(s => !s.delivered).length;
   if (totalActive > 0) {
     showToast('Masz aktywne przystanki. Zakończ je żeby zakończyć zmianę.');
     return;
   }
   if (!confirm('Zakończyć zmianę?')) return;
-  // Update shift end time to now
-  const shift = await getTodayShift();
-  if (shift && !shift.disabled) {
-    const now = new Date();
-    const toStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-    const [tH, tM] = toStr.split(':').map(Number);
-    const fromMins = shift.from * 60 + (shift.fromStr ? parseInt(shift.fromStr.split(':')[1]) : 0);
-    const toMins = tH * 60 + tM;
-    const hours = Math.max(0, (toMins - fromMins) / 60);
-    await saveShiftForDate(todayDateStr(), { ...shift, toStr, to: tH, hours });
-  }
   if (_autoEndTimer) clearTimeout(_autoEndTimer);
   setShiftInactive();
-  showToast('Zmiana zakończona ✓');
   _histCache = null;
+  showToast('Zmiana zakończona ✓');
 };
 
 // ─── ADMIN SHIFT EDIT ───
