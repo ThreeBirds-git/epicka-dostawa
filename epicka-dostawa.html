@@ -99,10 +99,10 @@
 
 
   /* Restaurant hero headers */
-  .rest-hero { padding: 28px 16px 8px; text-align: center; }
+  .rest-hero { padding: 28px 16px 8px; text-align: center; position: relative; z-index: 0; }
   .rest-hero-epicka { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 72px; color: var(--red); letter-spacing: 4px; line-height: 1; text-transform: uppercase; }
   .rest-hero-tajska { font-family: Georgia, 'Times New Roman', serif; font-weight: 900; font-size: 80px; color: var(--red); line-height: 1; letter-spacing: -2px; }
-  .tab-content { display: none; }
+  .tab-content { display: none; position: relative; z-index: 0; }
   .tab-content.active { display: block; }
   .section { padding: 14px 14px 0; }
   .section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 10px; }
@@ -384,6 +384,15 @@
   body.dark .admin-date-input, body.dark .admin-date-select { background: #222; color: #f0f0f0; }
 
   /* Shift inactive state */
+  .shift-inactive .input-card { display: none; }
+  .shift-inactive .section-title { display: none; }
+  .shift-inactive .stops-list { display: none; }
+  .shift-inactive .plan-btn { display: none; }
+  .shift-inactive-hero { display: none; text-align: center; padding: 60px 20px 40px; }
+  .shift-inactive .shift-inactive-hero { display: block; }
+  .shift-inactive-hero-icon { font-size: 64px; margin-bottom: 16px; }
+  .shift-inactive-hero-title { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; letter-spacing: 2px; color: var(--text); margin-bottom: 8px; text-transform: uppercase; }
+  .shift-inactive-hero-sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; line-height: 1.5; }
   .shift-inactive .input-card { opacity: 0.45; pointer-events: none; user-select: none; }
   .shift-inactive .plan-btn { display: none !important; }
   .start-shift-btn { background: var(--red); border: none; border-radius: 8px; color: white; font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; width: 100%; padding: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 3px 0 rgba(0,0,0,0.2); transition: all 0.15s; }
@@ -456,14 +465,14 @@
   </div>
 </div>
 
-<div id="app" style="display:none">
+<div id="app" style="display:none;position:relative;z-index:0">
 <header>
   <div class="checker"></div>
   <div class="header-inner">
     <div class="logo">EPICKA<span>DOSTAWA</span></div>
     <div class="header-right">
       <div style="display:flex;align-items:center;gap:6px">
-        <div class="shift-badge" id="shiftBadge" style="display:none"></div>
+        <div class="shift-badge" id="shiftBadge" onclick="openShiftPopup()" title="Edytuj godziny" style="display:none;cursor:pointer"></div>
         <button class="end-shift-btn" id="endShiftBtn" onclick="endShift()" style="display:none">ZAKOŃCZ</button>
       </div>
       <div class="header-counter" id="headerCounter">0 PRZYSTANKÓW</div>
@@ -501,6 +510,15 @@
 <div id="tab-epicka" class="tab-content active">
   <div class="rest-hero">
     <div class="rest-hero-epicka">EPICKA</div>
+  </div>
+  <div class="shift-inactive-hero">
+    <div class="shift-inactive-hero-icon">🍕</div>
+    <div class="shift-inactive-hero-title">Gotowy do pracy?</div>
+    <div class="shift-inactive-hero-sub">Rozpocznij zmianę żeby zacząć śledzić dostawy</div>
+    <button class="start-shift-btn" onclick="onStartShiftClick()" style="max-width:300px;margin:0 auto">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      ROZPOCZNIJ ZMIANĘ
+    </button>
   </div>
   <div class="section" style="margin-top:8px">
     <div class="section-title">Dodaj przystanek — Epicka</div>
@@ -568,6 +586,15 @@
 <div id="tab-tajska" class="tab-content">
   <div class="rest-hero">
     <div class="rest-hero-tajska">tajska</div>
+  </div>
+  <div class="shift-inactive-hero">
+    <div class="shift-inactive-hero-icon">🍜</div>
+    <div class="shift-inactive-hero-title">Gotowy do pracy?</div>
+    <div class="shift-inactive-hero-sub">Rozpocznij zmianę żeby zacząć śledzić dostawy</div>
+    <button class="start-shift-btn" onclick="onStartShiftClick()" style="max-width:300px;margin:0 auto">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      ROZPOCZNIJ ZMIANĘ
+    </button>
   </div>
   <div class="section" style="margin-top:14px">
     <div class="section-title">Dodaj przystanek — Tajska</div>
@@ -1130,14 +1157,12 @@ function setShiftActive(shift) {
 }
 
 function setShiftInactive() {
-  // Lock forms
   document.querySelectorAll('#tab-epicka, #tab-tajska').forEach(t => t.classList.add('shift-inactive'));
-  // Show start buttons, hide plan buttons handled by CSS
+  // Bottom start buttons hidden - hero block is used instead
   ['e','t'].forEach(p => {
     const startBtn = document.getElementById(p+'StartShiftBtn');
-    if (startBtn) startBtn.style.display = '';
+    if (startBtn) startBtn.style.display = 'none';
   });
-  // Hide badge and end button
   const badge = document.getElementById('shiftBadge');
   const endBtn = document.getElementById('endShiftBtn');
   if (badge) badge.style.display = 'none';
