@@ -1885,38 +1885,63 @@ window.removeStop = async (id, restauracja) => {
 
 // ─── PLAN ROUTE ───
 window.planRoute = (restauracja) => {
-  const active=stops[restauracja].filter(s=>!s.delivered);
-  const startPoint = restauracja==='tajska' ? TAJSKA : PIZZERIA;
-  if (!active.length){showToast('Brak aktywnych przystanków!');return;}
-  if (active.length===1){
-    window.open(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startPoint)}&destination=${encodeURIComponent(active[0].address)}&travelmode=driving`, '_blank');
-    return;
-  }
+  const active = stops[restauracja].filter(s => !s.delivered);
+  if (!active.length) { showToast('Brak aktywnych przystanków!'); return; }
+
   // Open window immediately (before async) to avoid popup blocker
   const mapsWin = window.open('', '_blank');
-  showToast('⏳ Obliczam optymalną trasę...');
-  const ds=new google.maps.DirectionsService();
-  ds.route({
-    origin:startPoint, destination:active[active.length-1].address,
-    waypoints:active.slice(0,-1).map(s=>({location:s.address,stopover:true})),
-    optimizeWaypoints:true, travelMode:google.maps.TravelMode.DRIVING
-  },(result,status)=>{
-    let url;
-    if (status==='OK'&&result.routes[0]){
-      const order=result.routes[0].waypoint_order;
-      const sorted=[...order.map(i=>active[i]),active[active.length-1]];
-      const originEnc=encodeURIComponent(startPoint);
-      const dest=encodeURIComponent(sorted[sorted.length-1].address);
-      const waypts=sorted.slice(0,-1).map(s=>encodeURIComponent(s.address)).join('%7C');
-      url=`https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${dest}&waypoints=${waypts}&travelmode=driving`;
-    } else {
-      const originEnc=encodeURIComponent(startPoint);
-      const waypts=active.map(s=>encodeURIComponent(s.address)).join('%7C');
-      url=`https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${originEnc}&waypoints=${waypts}&travelmode=driving&optimize=true`;
+
+  const buildUrl = (originStr) => {
+    const originEnc = encodeURIComponent(originStr);
+    const destEnc = encodeURIComponent(PIZZERIA); // always return to Epicka
+    if (active.length === 1) {
+      return `https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${destEnc}&waypoints=${encodeURIComponent(active[0].address)}&travelmode=driving`;
     }
-    if (mapsWin) mapsWin.location.href = url;
-    else window.open(url, '_blank');
-  });
+    // Use Directions API to optimize waypoints
+    const ds = new google.maps.DirectionsService();
+    ds.route({
+      origin: originStr,
+      destination: PIZZERIA,
+      waypoints: active.map(s => ({ location: s.address, stopover: true })),
+      optimizeWaypoints: true,
+      travelMode: google.maps.TravelMode.DRIVING
+    }, (result, status) => {
+      let url;
+      if (status === 'OK' && result.routes[0]) {
+        const order = result.routes[0].waypoint_order;
+        const sorted = order.map(i => active[i]);
+        const waypts = sorted.map(s => encodeURIComponent(s.address)).join('%7C');
+        url = `https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${destEnc}&waypoints=${waypts}&travelmode=driving`;
+      } else {
+        const waypts = active.map(s => encodeURIComponent(s.address)).join('%7C');
+        url = `https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${destEnc}&waypoints=${waypts}&travelmode=driving`;
+      }
+      if (mapsWin) mapsWin.location.href = url;
+      else window.open(url, '_blank');
+    });
+    return null; // async, handled in callback
+  };
+
+  // Try GPS first
+  if (navigator.geolocation) {
+    showToast('📍 Pobieram lokalizację...');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const originStr = pos.coords.latitude + ',' + pos.coords.longitude;
+        const url = buildUrl(originStr);
+        if (url && mapsWin) mapsWin.location.href = url;
+      },
+      () => {
+        // GPS denied or failed — fallback to Epicka
+        const url = buildUrl(PIZZERIA);
+        if (url && mapsWin) mapsWin.location.href = url;
+      },
+      { timeout: 5000, maximumAge: 30000 }
+    );
+  } else {
+    const url = buildUrl(PIZZERIA);
+    if (url && mapsWin) mapsWin.location.href = url;
+  }
 };
 function openMaps(webUrl) {
   // Try to open native Maps app via comgooglemaps:// (iOS) or intent (Android)
@@ -2220,7 +2245,8 @@ async function renderHistoria() {
       : '';
 
     const dayCosts = dayKey ? (_costsCache[dayKey] || null) : null;
-    const hasCosts = dayCosts && (dayCosts.parking > 0 || (dayCosts.extra||[]).length > 0);
+    const costsTotal = dayCosts ? ((dayCosts.parking||0) + (dayCosts.extra||[]).reduce((a,e)=>a+(e.amount||0),0)) : 0;
+    const hasCosts = costsTotal > 0;
     const costsHtml = hasCosts ? (() => {
       let rows = '';
       if (dayCosts.parking > 0) rows += '<div style="display:flex;justify-content:space-between;padding:4px 0"><span>🅿️ Parking</span><span style="font-weight:700">' + dayCosts.parking + ' zł</span></div>';
@@ -3010,34 +3036,37 @@ window.endShift = async () => {
 const TUTORIAL_STEPS = [
   {
     selector: '.hamburger-btn',
+    tab: 'epicka',
     text: '👋 Witaj w Epicka Dostawa!<br><br>W menu <b>≡</b> znajdziesz swoje konto, stawkę godzinową oraz ustawienia aplikacji.',
     showSkip: true
   },
   {
-    selector: '#eStartShiftBtn, .start-shift-btn',
+    selector: '.start-shift-btn',
+    tab: 'epicka',
     text: '▶ Każdy dzień zaczynasz od kliknięcia <b>ROZPOCZNIJ ZMIANĘ</b>.<br><br>Wpiszesz tam godziny Od–Do, a aplikacja wyliczy Twoją wypłatę.',
     showSkip: false
   },
   {
     selector: '#eAddrInput',
+    tab: 'epicka',
     text: '📍 Wpisz adres dostawy i kliknij <b>+</b> żeby dodać przystanek do trasy.<br><br>Możesz też dodać notatkę np. piętro lub domofon.',
-    showSkip: false,
-    requiresActive: true
+    showSkip: false
   },
   {
     selector: '.pay-btns',
+    tab: 'epicka',
     text: '💵 <b>Gotówka</b> · 💳 <b>Karta</b> · <b>WOLT</b><br><br>Wybierz metodę płatności — możesz ją zmienić w każdej chwili, nawet po przyjeździe do klienta.<br><br>✓ przy przystanku oznacza dostawę jako dostarczoną — trafi automatycznie do historii.',
-    showSkip: false,
-    requiresActive: true
+    showSkip: false
   },
   {
     selector: '#ePlanBtn',
+    tab: 'epicka',
     text: '📍 <b>ZAPLANUJ TRASĘ</b> otwiera Google Maps z optymalną trasą do wszystkich przystanków.',
-    showSkip: false,
-    requiresActive: true
+    showSkip: false
   },
   {
-    selector: '.tab[data-tab="historia"], [onclick*="historia"]',
+    selector: '#tab-historia',
+    tab: 'historia',
     text: '🕐 W zakładce <b>HISTORIA</b> znajdziesz podsumowanie każdego dnia.<br><br>Rozwiń dzień żeby zobaczyć dostawy. Kliknij <b>✏️</b> żeby edytować kwotę, adres lub metodę płatności.<br><br>Widzisz też 💵 gotówkę, 💳 kartę i 💰 wypłatę za dzień.<br><br><b>Powodzenia! 🍕</b>',
     showSkip: false
   }
@@ -3057,8 +3086,25 @@ function showTutorialStep(step) {
     return;
   }
   const s = TUTORIAL_STEPS[step];
+
+  // Switch to the correct tab first
+  if (s.tab) {
+    const tabBtn = document.querySelector('.tab[onclick*="' + s.tab + '"]');
+    if (tabBtn && !tabBtn.classList.contains('active')) {
+      tabBtn.click();
+    }
+  }
+
   const overlay = document.getElementById('tutorialOverlay');
   overlay.style.display = 'block';
+
+  // Small delay to let tab render before measuring
+  setTimeout(() => _doShowStep(step), 80);
+}
+
+function _doShowStep(step) {
+  const s = TUTORIAL_STEPS[step];
+  const overlay = document.getElementById('tutorialOverlay');
 
   // Find target element
   let target = document.querySelector(s.selector);
