@@ -2711,6 +2711,41 @@ const savedDark = localStorage.getItem('epDarkMode');
 if (savedDark === '1') applyDarkMode(true);
 
 
+
+// ─── SHIFT POPUP FUNCTIONS ───
+window.saveShift = async () => {
+  const dayOff = document.getElementById('shiftDayOff')?.checked;
+  if (dayOff) {
+    await saveShiftForDate(todayDateStr(), { disabled: true });
+    document.getElementById('shiftOverlay').classList.remove('show');
+    setShiftInactive();
+    showToast('Dzień wolny zapisany ✓');
+    return;
+  }
+  const fromStr = document.getElementById('shiftFrom').value || '12:00';
+  const toStr = document.getElementById('shiftTo').value || '22:00';
+  const errEl = document.getElementById('shiftError');
+  if (!fromStr || !toStr) { errEl.textContent = 'Wpisz godziny'; return; }
+  const [fH, fM] = fromStr.split(':').map(Number);
+  const [tH, tM] = toStr.split(':').map(Number);
+  const fromMins = fH * 60 + fM;
+  const toMins = tH * 60 + tM;
+  if (fromMins >= toMins) { errEl.textContent = 'Godzina końca musi być po starcie'; return; }
+  const hours = (toMins - fromMins) / 60;
+  const shift = { fromStr, toStr, from: fH, to: tH, hours };
+  await saveShiftForDate(todayDateStr(), shift);
+  document.getElementById('shiftOverlay').classList.remove('show');
+  setShiftActive(shift);
+  scheduleAutoEndShift();
+  showToast('Zmiana rozpoczęta ✓');
+};
+
+window.closeShiftPopup = closeShiftPopup;
+window.toggleShiftDayOff = (checked) => {
+  const rows = document.getElementById('shiftTimeRows');
+  if (rows) { rows.style.opacity = checked ? '0.35' : '1'; rows.style.pointerEvents = checked ? 'none' : ''; }
+};
+
 </script>
 </body>
 </html>
