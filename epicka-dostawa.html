@@ -31,7 +31,7 @@
   body.dark .auth-card { background: #181818; }
   body.dark .settings-panel { background: #181818; }
   body.dark .settings-overlay { background: rgba(0,0,0,0.7); }
-  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 0; padding-top: 110px; overflow: hidden; }
+  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; padding-top: 110px; }
 
   /* ─── ADMIN ADD STOP FORM ─── */
   .admin-add-form { background: var(--cream-dark); border-radius: 10px; padding: 16px; margin-top: 12px; display: none; flex-direction: column; gap: 10px; }
@@ -79,7 +79,7 @@
     .bottom-checker { display: none; }
     .plan-btn { position: sticky; bottom: 0; }
     .tabs { top: 64px; }
-    body { padding-top: 108px; }
+    body { padding-top: 110px; }
     .rest-hero { padding-top: 16px; }
   }
   .checker { height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
@@ -115,10 +115,8 @@
   .rest-hero { padding: 28px 16px 8px; text-align: center; position: relative; z-index: 0; }
   .rest-hero-epicka { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 72px; color: var(--red); letter-spacing: 4px; line-height: 1; text-transform: uppercase; }
   .rest-hero-tajska { font-family: Georgia, 'Times New Roman', serif; font-weight: 900; font-size: 80px; color: var(--red); line-height: 1; letter-spacing: -2px; }
-  .tab-content { display: none; position: relative; z-index: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .tab-content { display: none; position: relative; z-index: 0; }
   .tab-content.active { display: block; }
-  #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-  .tabs { flex-shrink: 0; }
   .section { padding: 14px 14px 0; }
   .section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 10px; }
   .input-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; padding: 12px; }
