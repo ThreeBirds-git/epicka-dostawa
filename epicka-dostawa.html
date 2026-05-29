@@ -31,7 +31,7 @@
   body.dark .auth-card { background: #181818; }
   body.dark .settings-panel { background: #181818; }
   body.dark .settings-overlay { background: rgba(0,0,0,0.7); }
-  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 24px; padding-top: 110px; }
+  body { background: var(--cream); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; padding-bottom: 0; padding-top: 110px; overflow: hidden; }
 
   /* ─── ADMIN ADD STOP FORM ─── */
   .admin-add-form { background: var(--cream-dark); border-radius: 10px; padding: 16px; margin-top: 12px; display: none; flex-direction: column; gap: 10px; }
@@ -115,8 +115,10 @@
   .rest-hero { padding: 28px 16px 8px; text-align: center; position: relative; z-index: 0; }
   .rest-hero-epicka { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 72px; color: var(--red); letter-spacing: 4px; line-height: 1; text-transform: uppercase; }
   .rest-hero-tajska { font-family: Georgia, 'Times New Roman', serif; font-weight: 900; font-size: 80px; color: var(--red); line-height: 1; letter-spacing: -2px; }
-  .tab-content { display: none; position: relative; z-index: 0; }
+  .tab-content { display: none; position: relative; z-index: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .tab-content.active { display: block; }
+  #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  .tabs { flex-shrink: 0; }
   .section { padding: 14px 14px 0; }
   .section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 10px; }
   .input-card { background: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; padding: 12px; }
@@ -569,9 +571,7 @@
     <div class="input-card">
       <div class="input-wrapper">
         <input type="text" id="eAddrInput" class="addr-input" placeholder="Wpisz adres dostawy..." autocomplete="off"/>
-        <button class="mic-btn" id="eMicBtn" onclick="toggleVoice('e')">
-          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
-        </button>
+        
       </div>
       <div id="eSuggestions" class="suggestions"></div>
       <div class="note-row">
@@ -645,9 +645,7 @@
     <div class="input-card">
       <div class="input-wrapper">
         <input type="text" id="tAddrInput" class="addr-input" placeholder="Wpisz adres dostawy..." autocomplete="off"/>
-        <button class="mic-btn" id="tMicBtn" onclick="toggleVoice('t')">
-          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
-        </button>
+        
       </div>
       <div id="tSuggestions" class="suggestions"></div>
       <div class="note-row">
@@ -1762,8 +1760,7 @@ function renderStops(restauracja) {
   const active = arr.filter(s=>!s.delivered).length;
   document.getElementById(p+'StopsTitle').textContent = `PRZYSTANKI (${active} aktywnych)`;
   document.getElementById(p+'PlanBtn').disabled = active===0;
-  const totalActive = stops.epicka.filter(s=>!s.delivered).length + stops.tajska.filter(s=>!s.delivered).length;
-  document.getElementById('headerCounter').textContent = `${totalActive} PRZYSTANKÓW`;
+  // headerCounter removed from header
   // Show "deliver all" button only for admin when there are active stops
   const deliverAllBtn = document.getElementById(p+'DeliverAllBtn');
   if (deliverAllBtn) deliverAllBtn.style.display = (isAdmin && active > 0) ? '' : 'none';
