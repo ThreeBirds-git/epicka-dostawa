@@ -2027,6 +2027,25 @@ async function renderHistoria() {
     grouped[key].push(i);
   });
 
+  // Always show today if shift exists, even with no deliveries
+  const todayStr = todayDateStr();
+  const todayDate = new Date(todayStr + 'T12:00:00');
+  if (todayDate >= start && todayDate <= end) {
+    const todayShift = await getShiftForDate(todayStr);
+    if (todayShift && !todayShift.disabled) {
+      _shiftCache[todayStr] = todayShift;
+      const todayKey = todayDate.toLocaleDateString('pl-PL', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+      if (!grouped[todayKey]) {
+        grouped[todayKey] = []; // empty — no deliveries yet
+        // Add today's shift to stats
+        if (todayShift.hours) {
+          stats.shiftHours += todayShift.hours;
+          stats.shiftEarn += todayShift.hours * rate;
+        }
+      }
+    }
+  }
+
   daysEl.innerHTML = Object.entries(grouped).map(([dateStr, list]) => {
     const dayStats = { Gotówka:0, Karta:0, woltCount:0, total:0 };
     const dayKey = list[0]?._date?.toISOString?.().slice(0,10) || '';
