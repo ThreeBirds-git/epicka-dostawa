@@ -1536,13 +1536,16 @@ onAuthStateChanged(auth, async user => {
     loadStops('tajska');
     await loadRateFromFirestore();
     await checkAndShowPopups();
-    checkShowTutorial();
     if (_firstLogin) {
       _firstLogin = false;
       // Show stay dialog only if pref not set and dontAsk not set
       const pref = localStorage.getItem('epStayLogged');
       if (pref === null && !getDontAsk()) {
         setTimeout(showStayDialog, 800);
+        // tutorial starts after answerStay
+      } else {
+        // stay dialog won't show — run tutorial directly
+        checkShowTutorial();
       }
     }
     hideSplash();
@@ -2958,6 +2961,8 @@ window.answerStay = (yes) => {
   document.getElementById('stayOverlay').classList.remove('show');
   // Apply persistence
   setPersistence(auth, yes ? browserLocalPersistence : browserSessionPersistence);
+  // Start tutorial after dialog closes (first time only)
+  checkShowTutorial();
 };
 
 function showStayDialog() {
@@ -3282,7 +3287,8 @@ function _doShowStep(step) {
       'left:' + cardLeft + 'px',
       'top:' + cardTop + 'px',
       'max-height:' + (vh - cardTop - 8) + 'px',
-      'overflow-y:auto'
+      'overflow-y:auto',
+      'scrollbar-width:thin'
     ].join(';');
 
     document.getElementById('tutorialText').innerHTML = s.text;
