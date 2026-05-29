@@ -1066,7 +1066,7 @@
 </div>
 
 <!-- TUTORIAL OVERLAY -->
-<div id="tutorialOverlay" style="display:none;position:fixed;inset:0;z-index:800;pointer-events:all">
+<div id="tutorialOverlay" style="display:none;position:fixed;inset:0;z-index:800;pointer-events:none">
   <div id="tutorialDimTop" style="position:absolute;left:0;right:0;top:0;background:rgba(0,0,0,0.65)"></div>
   <div id="tutorialDimBottom" style="position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,0.65)"></div>
   <div id="tutorialDimLeft" style="position:absolute;top:0;bottom:0;left:0;background:rgba(0,0,0,0.65)"></div>
@@ -3202,16 +3202,13 @@ function _doShowStep(step) {
   const s = TUTORIAL_STEPS[step];
   const pad = 8;
   let target = null;
-  let mockEl = null;
 
   // Special handling for mock steps
   if (s.useMockStart) {
-    const mockWrap = document.getElementById('tutorialMockStart');
-    mockWrap.style.display = 'block';
+    document.getElementById('tutorialMockStart').style.display = 'block';
     target = document.getElementById('tutorialMockStartBtn');
   } else if (s.useMockHistory) {
-    const mockWrap = document.getElementById('tutorialMockHistory');
-    mockWrap.style.display = 'block';
+    document.getElementById('tutorialMockHistory').style.display = 'block';
     target = document.getElementById('tutorialMockHistRecord');
   } else {
     target = document.querySelector(s.selector);
@@ -3219,40 +3216,81 @@ function _doShowStep(step) {
 
   if (!target) { showTutorialStep(step + 1); return; }
 
-  const rect = target.getBoundingClientRect();
-  const highlight = document.getElementById('tutorialHighlight');
-  highlight.style.cssText = 'position:absolute;border:3px solid var(--red);border-radius:8px;box-shadow:0 0 0 3px rgba(232,35,26,0.3);pointer-events:none;transition:all 0.3s ease;' +
-    'left:' + (rect.left - pad) + 'px;top:' + (rect.top - pad) + 'px;width:' + (rect.width + pad*2) + 'px;height:' + (rect.height + pad*2) + 'px';
-
-  // Dim layers
-  document.getElementById('tutorialDimTop').style.cssText = 'position:absolute;left:0;right:0;top:0;background:rgba(0,0,0,0.65);height:' + Math.max(0, rect.top - pad) + 'px';
-  document.getElementById('tutorialDimBottom').style.cssText = 'position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,0.65);top:' + (rect.bottom + pad) + 'px';
-  document.getElementById('tutorialDimLeft').style.cssText = 'position:absolute;top:' + (rect.top-pad) + 'px;bottom:0;left:0;background:rgba(0,0,0,0.65);width:' + Math.max(0, rect.left-pad) + 'px;height:' + (rect.height+pad*2) + 'px';
-  document.getElementById('tutorialDimRight').style.cssText = 'position:absolute;top:' + (rect.top-pad) + 'px;bottom:0;right:0;background:rgba(0,0,0,0.65);left:' + (rect.right+pad) + 'px;height:' + (rect.height+pad*2) + 'px';
-
-  // Position card - always visible, always clickable
-  const card = document.getElementById('tutorialCard');
-  const cardW = Math.min(300, window.innerWidth - 28);
-  const spaceBelow = window.innerHeight - rect.bottom - pad - 20;
-  const spaceAbove = rect.top - pad - 20;
-  let cardTop;
-  if (spaceBelow >= 160) {
-    cardTop = rect.bottom + pad + 12;
-  } else if (spaceAbove >= 160) {
-    cardTop = rect.top - pad - 170;
-  } else {
-    // Not enough space either side — place at bottom of screen
-    cardTop = window.innerHeight - 210;
+  // Scroll element into view (centered) so it's always visible
+  if (!s.useMockStart && !s.useMockHistory) {
+    target.scrollIntoView({ block: 'center', behavior: 'instant' });
   }
-  cardTop = Math.max(10, Math.min(cardTop, window.innerHeight - 210));
-  const cardLeft = Math.max(14, Math.min(rect.left, window.innerWidth - cardW - 14));
-  card.style.cssText = 'position:absolute;background:var(--cream);border-radius:12px;padding:18px 18px 14px;box-shadow:0 8px 32px rgba(0,0,0,0.3);pointer-events:all;width:' + cardW + 'px;left:' + cardLeft + 'px;top:' + cardTop + 'px;z-index:802';
 
-  document.getElementById('tutorialText').innerHTML = s.text;
-  document.getElementById('tutorialCounter').textContent = (step+1) + '/' + TUTORIAL_STEPS.length;
-  document.getElementById('tutorialSkipBtn').style.display = s.showSkip ? '' : 'none';
-  document.getElementById('tutorialNextBtn').textContent = step === TUTORIAL_STEPS.length - 1 ? 'GOTOWE' : 'DALEJ';
-  _tutorialStep = step;
+  // Wait a tick for scroll to settle, then measure
+  requestAnimationFrame(() => {
+    const rect = target.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Highlight — fixed so it follows viewport
+    const highlight = document.getElementById('tutorialHighlight');
+    highlight.style.cssText = [
+      'position:fixed',
+      'border:3px solid var(--red)',
+      'border-radius:8px',
+      'box-shadow:0 0 0 3px rgba(232,35,26,0.3)',
+      'pointer-events:none',
+      'z-index:801',
+      'transition:all 0.25s ease',
+      'left:' + (rect.left - pad) + 'px',
+      'top:' + (rect.top - pad) + 'px',
+      'width:' + (rect.width + pad*2) + 'px',
+      'height:' + (rect.height + pad*2) + 'px'
+    ].join(';');
+
+    // Dim layers — fixed
+    const topH = Math.max(0, rect.top - pad);
+    const botT = Math.min(vh, rect.bottom + pad);
+    const leftW = Math.max(0, rect.left - pad);
+    const rightL = Math.min(vw, rect.right + pad);
+    document.getElementById('tutorialDimTop').style.cssText    = 'position:fixed;left:0;right:0;top:0;background:rgba(0,0,0,0.65);height:' + topH + 'px;z-index:800';
+    document.getElementById('tutorialDimBottom').style.cssText = 'position:fixed;left:0;right:0;bottom:0;background:rgba(0,0,0,0.65);top:' + botT + 'px;z-index:800';
+    document.getElementById('tutorialDimLeft').style.cssText   = 'position:fixed;left:0;top:' + topH + 'px;height:' + (botT-topH) + 'px;background:rgba(0,0,0,0.65);width:' + leftW + 'px;z-index:800';
+    document.getElementById('tutorialDimRight').style.cssText  = 'position:fixed;right:0;top:' + topH + 'px;height:' + (botT-topH) + 'px;background:rgba(0,0,0,0.65);left:' + rightL + 'px;z-index:800';
+
+    // Card — fixed, always on screen
+    const card = document.getElementById('tutorialCard');
+    const cardW = Math.min(320, vw - 28);
+    const cardH = 220; // conservative estimate
+    const spaceBelow = vh - botT - 16;
+    const spaceAbove = topH - 16;
+    let cardTop;
+    if (spaceBelow >= cardH) {
+      cardTop = botT + 12;
+    } else if (spaceAbove >= cardH) {
+      cardTop = topH - cardH - 12;
+    } else {
+      // Not enough space — float card at safe bottom position
+      cardTop = vh - cardH - 16;
+    }
+    cardTop = Math.max(8, Math.min(cardTop, vh - cardH - 8));
+    const cardLeft = Math.max(14, Math.min(rect.left, vw - cardW - 14));
+    card.style.cssText = [
+      'position:fixed',
+      'background:var(--cream)',
+      'border-radius:12px',
+      'padding:18px 18px 14px',
+      'box-shadow:0 8px 32px rgba(0,0,0,0.35)',
+      'pointer-events:all',
+      'z-index:802',
+      'width:' + cardW + 'px',
+      'left:' + cardLeft + 'px',
+      'top:' + cardTop + 'px',
+      'max-height:' + (vh - cardTop - 8) + 'px',
+      'overflow-y:auto'
+    ].join(';');
+
+    document.getElementById('tutorialText').innerHTML = s.text;
+    document.getElementById('tutorialCounter').textContent = (step+1) + '/' + TUTORIAL_STEPS.length;
+    document.getElementById('tutorialSkipBtn').style.display = s.showSkip ? '' : 'none';
+    document.getElementById('tutorialNextBtn').textContent = step === TUTORIAL_STEPS.length - 1 ? 'GOTOWE' : 'DALEJ';
+    _tutorialStep = step;
+  });
 }
 
 window.tutorialNext = () => { showTutorialStep(_tutorialStep + 1); };
