@@ -987,8 +987,56 @@
   </div>
 </div>
 
+<!-- TUTORIAL MOCK ELEMENTS -->
+<div id="tutorialMockStart" style="display:none;position:fixed;inset:0;z-index:799;pointer-events:none;align-items:center;justify-content:center">
+  <button class="start-shift-btn" id="tutorialMockStartBtn" style="max-width:300px;pointer-events:none;position:relative;z-index:801">
+    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    ROZPOCZNIJ ZMIANĘ
+  </button>
+</div>
+
+<div id="tutorialMockHistory" style="display:none;position:fixed;left:0;right:0;z-index:799;pointer-events:none;padding:0 14px">
+  <div class="history-day open" style="pointer-events:none">
+    <div class="history-day-header" style="pointer-events:none">
+      <div class="history-day-left">
+        <div class="history-date">PIĄTEK, 29 MAJA 2026</div>
+        <div class="history-day-meta" style="flex-direction:column;align-items:flex-start;gap:4px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="history-count">5 dostaw</span>
+            <span style="font-family:Barlow Condensed,sans-serif;font-size:12px;color:var(--muted);font-weight:700">12:00 – 22:00 · 10h</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span style="font-family:Barlow Condensed,sans-serif;font-size:14px;font-weight:700;color:var(--green)">💵 120 zł</span>
+            <span style="font-family:Barlow Condensed,sans-serif;font-size:14px;font-weight:700;color:#2563eb">💳 85 zł</span>
+            <span style="color:#2a7a4a;font-weight:900;font-family:Barlow Condensed,sans-serif;letter-spacing:1px">💰 270 zł</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <div class="history-day-chevron" style="transform:rotate(180deg)">▼</div>
+      </div>
+    </div>
+    <div class="history-day-body" style="display:block">
+      <div class="history-stop">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:14px">✓ Mazurska 12, Szczecin</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">14:32 · epicka</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+            <div style="font-size:11px;text-align:right;color:var(--muted)">GOTÓWKA<br><b style="color:var(--text);font-size:13px">35 zł</b></div>
+            <button class="hist-edit-btn" style="pointer-events:none">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TUTORIAL OVERLAY -->
-<div id="tutorialOverlay" style="display:none;position:fixed;inset:0;z-index:800;pointer-events:none">
+<div id="tutorialOverlay" style="display:none;position:fixed;inset:0;z-index:800;pointer-events:all">
   <div id="tutorialDimTop" style="position:absolute;left:0;right:0;top:0;background:rgba(0,0,0,0.65)"></div>
   <div id="tutorialDimBottom" style="position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,0.65)"></div>
   <div id="tutorialDimLeft" style="position:absolute;top:0;bottom:0;left:0;background:rgba(0,0,0,0.65)"></div>
@@ -3045,7 +3093,8 @@ const TUTORIAL_STEPS = [
     showSkip: true
   },
   {
-    selector: '.start-shift-btn',
+    selector: null,
+    useMockStart: true,
     tab: 'epicka',
     text: '▶ Każdy dzień zaczynasz od kliknięcia <b>ROZPOCZNIJ ZMIANĘ</b>.<br><br>Wpiszesz tam godziny Od–Do, a aplikacja wyliczy Twoją wypłatę.',
     showSkip: false
@@ -3069,7 +3118,8 @@ const TUTORIAL_STEPS = [
     showSkip: false
   },
   {
-    selector: '#tab-historia',
+    selector: null,
+    useMockHistory: true,
     tab: 'historia',
     text: '🕐 W zakładce <b>HISTORIA</b> znajdziesz podsumowanie każdego dnia.<br><br>Rozwiń dzień żeby zobaczyć dostawy. Kliknij <b>✏️</b> żeby edytować kwotę, adres lub metodę płatności.<br><br>Widzisz też 💵 gotówkę, 💳 kartę i 💰 wypłatę za dzień.<br><br><b>Powodzenia! 🍕</b>',
     showSkip: false
@@ -3084,80 +3134,96 @@ function startTutorial() {
   showTutorialStep(0);
 }
 
+function _hideTutorialMocks() {
+  document.getElementById('tutorialMockStart').style.display = 'none';
+  document.getElementById('tutorialMockHistory').style.display = 'none';
+}
+
 function showTutorialStep(step) {
   if (step >= TUTORIAL_STEPS.length) {
     endTutorial();
     return;
   }
   const s = TUTORIAL_STEPS[step];
+  _hideTutorialMocks();
 
-  // Switch to the correct tab first
+  // Switch tab
   if (s.tab) {
     const tabBtn = document.querySelector('.tab[onclick*="' + s.tab + '"]');
-    if (tabBtn && !tabBtn.classList.contains('active')) {
-      tabBtn.click();
-    }
+    if (tabBtn && !tabBtn.classList.contains('active')) tabBtn.click();
   }
+
+  // Block scrolling
+  document.body.style.overflow = 'hidden';
 
   const overlay = document.getElementById('tutorialOverlay');
   overlay.style.display = 'block';
 
-  // Small delay to let tab render before measuring
-  setTimeout(() => _doShowStep(step), 80);
+  setTimeout(() => _doShowStep(step), 100);
 }
 
 function _doShowStep(step) {
   const s = TUTORIAL_STEPS[step];
-  const overlay = document.getElementById('tutorialOverlay');
+  const pad = 8;
+  let target = null;
+  let mockEl = null;
 
-  // Find target element
-  let target = document.querySelector(s.selector);
-  if (!target) {
-    // Skip if element not found
-    showTutorialStep(step + 1);
-    return;
+  // Special handling for mock steps
+  if (s.useMockStart) {
+    const mockWrap = document.getElementById('tutorialMockStart');
+    mockWrap.style.display = 'flex';
+    // Position mock in center of screen below header
+    const header = document.querySelector('header');
+    const hh = header ? header.offsetHeight + 46 : 120; // header + tabs
+    mockWrap.style.top = hh + 'px';
+    mockWrap.style.bottom = '0';
+    target = document.getElementById('tutorialMockStartBtn');
+  } else if (s.useMockHistory) {
+    const mockWrap = document.getElementById('tutorialMockHistory');
+    const header = document.querySelector('header');
+    const hh = header ? header.offsetHeight + 46 : 120;
+    mockWrap.style.top = (hh + 10) + 'px';
+    mockWrap.style.display = 'block';
+    target = mockWrap.querySelector('.history-day');
+  } else {
+    target = document.querySelector(s.selector);
   }
+
+  if (!target) { showTutorialStep(step + 1); return; }
 
   const rect = target.getBoundingClientRect();
-  const pad = 6;
-
-  // Update highlight
   const highlight = document.getElementById('tutorialHighlight');
-  highlight.style.left = (rect.left - pad) + 'px';
-  highlight.style.top = (rect.top - pad) + 'px';
-  highlight.style.width = (rect.width + pad*2) + 'px';
-  highlight.style.height = (rect.height + pad*2) + 'px';
+  highlight.style.cssText = 'position:absolute;border:3px solid var(--red);border-radius:8px;box-shadow:0 0 0 3px rgba(232,35,26,0.3);pointer-events:none;transition:all 0.3s ease;' +
+    'left:' + (rect.left - pad) + 'px;top:' + (rect.top - pad) + 'px;width:' + (rect.width + pad*2) + 'px;height:' + (rect.height + pad*2) + 'px';
 
-  // Update dimming layers
-  document.getElementById('tutorialDimTop').style.height = Math.max(0, rect.top - pad) + 'px';
-  document.getElementById('tutorialDimBottom').style.top = (rect.bottom + pad) + 'px';
-  document.getElementById('tutorialDimLeft').style.top = (rect.top - pad) + 'px';
-  document.getElementById('tutorialDimLeft').style.height = (rect.height + pad*2) + 'px';
-  document.getElementById('tutorialDimLeft').style.width = Math.max(0, rect.left - pad) + 'px';
-  document.getElementById('tutorialDimRight').style.top = (rect.top - pad) + 'px';
-  document.getElementById('tutorialDimRight').style.height = (rect.height + pad*2) + 'px';
-  document.getElementById('tutorialDimRight').style.left = (rect.right + pad) + 'px';
+  // Dim layers
+  document.getElementById('tutorialDimTop').style.cssText = 'position:absolute;left:0;right:0;top:0;background:rgba(0,0,0,0.65);height:' + Math.max(0, rect.top - pad) + 'px';
+  document.getElementById('tutorialDimBottom').style.cssText = 'position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,0.65);top:' + (rect.bottom + pad) + 'px';
+  document.getElementById('tutorialDimLeft').style.cssText = 'position:absolute;top:' + (rect.top-pad) + 'px;bottom:0;left:0;background:rgba(0,0,0,0.65);width:' + Math.max(0, rect.left-pad) + 'px;height:' + (rect.height+pad*2) + 'px';
+  document.getElementById('tutorialDimRight').style.cssText = 'position:absolute;top:' + (rect.top-pad) + 'px;bottom:0;right:0;background:rgba(0,0,0,0.65);left:' + (rect.right+pad) + 'px;height:' + (rect.height+pad*2) + 'px';
 
-  // Position card below or above target
+  // Position card - always visible, always clickable
   const card = document.getElementById('tutorialCard');
-  const cardHeight = 160;
-  const spaceBelow = window.innerHeight - rect.bottom - pad;
-  if (spaceBelow > cardHeight + 20) {
-    card.style.top = (rect.bottom + pad + 10) + 'px';
+  const cardW = Math.min(300, window.innerWidth - 28);
+  const spaceBelow = window.innerHeight - rect.bottom - pad - 20;
+  const spaceAbove = rect.top - pad - 20;
+  let cardTop;
+  if (spaceBelow >= 160) {
+    cardTop = rect.bottom + pad + 12;
+  } else if (spaceAbove >= 160) {
+    cardTop = rect.top - pad - 170;
   } else {
-    card.style.top = Math.max(10, rect.top - pad - cardHeight - 10) + 'px';
+    // Not enough space either side — place at bottom of screen
+    cardTop = window.innerHeight - 210;
   }
-  card.style.left = Math.min(window.innerWidth - 320, Math.max(10, rect.left)) + 'px';
-  card.style.right = 'auto';
+  cardTop = Math.max(10, Math.min(cardTop, window.innerHeight - 210));
+  const cardLeft = Math.max(14, Math.min(rect.left, window.innerWidth - cardW - 14));
+  card.style.cssText = 'position:absolute;background:var(--cream);border-radius:12px;padding:18px 18px 14px;box-shadow:0 8px 32px rgba(0,0,0,0.3);pointer-events:all;width:' + cardW + 'px;left:' + cardLeft + 'px;top:' + cardTop + 'px;z-index:802';
 
-  // Update content
   document.getElementById('tutorialText').innerHTML = s.text;
-  document.getElementById('tutorialCounter').textContent = (step + 1) + '/' + TUTORIAL_STEPS.length;
+  document.getElementById('tutorialCounter').textContent = (step+1) + '/' + TUTORIAL_STEPS.length;
   document.getElementById('tutorialSkipBtn').style.display = s.showSkip ? '' : 'none';
-
-  const nextBtn = document.getElementById('tutorialNextBtn');
-  nextBtn.textContent = step === TUTORIAL_STEPS.length - 1 ? 'GOTOWE' : 'DALEJ';
-
+  document.getElementById('tutorialNextBtn').textContent = step === TUTORIAL_STEPS.length - 1 ? 'GOTOWE' : 'DALEJ';
   _tutorialStep = step;
 }
 
@@ -3166,6 +3232,8 @@ window.skipTutorial = () => { endTutorial(); };
 
 function endTutorial() {
   document.getElementById('tutorialOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+  _hideTutorialMocks();
   localStorage.setItem('epTutorialDone', '1');
 }
 
