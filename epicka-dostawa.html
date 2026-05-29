@@ -79,7 +79,8 @@
     .bottom-checker { display: none; }
     .plan-btn { position: sticky; bottom: 0; }
     .tabs { top: 64px; }
-    body { padding-top: 110px; }
+    body { padding-top: 108px; }
+    .rest-hero { padding-top: 16px; }
   }
   .checker { height: 10px; background-image: repeating-linear-gradient(90deg, var(--red) 0px, var(--red) 10px, var(--cream) 10px, var(--cream) 20px); }
   header { background: var(--cream); position: fixed; top: 0; left: 0; right: 0; z-index: 400; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
@@ -1043,7 +1044,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, setPersistence, browserLocalPersistence, browserSessionPersistence, signOut as fbSignOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp, Timestamp }
+import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, setDoc, query, where, orderBy, serverTimestamp, Timestamp }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1080,9 +1081,9 @@ async function saveRateToFirestore(val) {
 async function loadRateFromFirestore() {
   if (!currentUser) return;
   try {
-    const snap = await getDocs(query(collection(db,'users'), where('uid','==',currentUser.uid)));
-    if (!snap.empty) {
-      const r = snap.docs[0].data().rate;
+    const snap = await getDoc(doc(db,'users',currentUser.uid));
+    if (snap.exists()) {
+      const r = snap.data().rate;
       if (r) localStorage.setItem('epRate', r);
     }
   } catch(e) {}
@@ -1150,14 +1151,18 @@ function setShiftActive(shift) {
   const badge = document.getElementById('shiftBadge');
   if (row2) row2.style.display = 'flex';
   if (badge && shift && !shift.disabled) {
-    const fromStr = shift.fromStr || (shift.from + ':00');
-    const toStr = shift.toStr || (shift.to + ':00');
+    const fromStr = shift.fromStr || (String(shift.from).padStart(2,'0') + ':00');
+    const toStr = shift.toStr || (String(shift.to).padStart(2,'0') + ':00');
     badge.textContent = fromStr + ' – ' + toStr;
   }
-  // Two-row header: checker(10) + row1(54) + row2(52) = 116px to bottom of header
+  // Measure actual header height dynamically
+  const header = document.querySelector('header');
   const tabsEl = document.querySelector('.tabs');
-  if (tabsEl) tabsEl.style.top = '116px';
-  document.body.style.paddingTop = '160px';
+  if (header && tabsEl) {
+    const h = header.offsetHeight;
+    tabsEl.style.top = h + 'px';
+    document.body.style.paddingTop = (h + 46) + 'px';
+  }
 }
 
 
@@ -1169,7 +1174,7 @@ function setShiftInactive() {
   });
   const row2 = document.getElementById('headerRow2');
   if (row2) row2.style.display = 'none';
-  // Single-row header: checker(10) + row1(54) = 64px
+  // Reset to CSS defaults
   const tabsEl = document.querySelector('.tabs');
   if (tabsEl) tabsEl.style.top = '';
   document.body.style.paddingTop = '';
@@ -1334,7 +1339,7 @@ onAuthStateChanged(auth, async user => {
     loadStops('epicka');
     loadStops('tajska');
     await loadRateFromFirestore();
-    checkAndShowPopups();
+    await checkAndShowPopups();
     if (_firstLogin) {
       _firstLogin = false;
       // Show stay dialog only if pref not set and dontAsk not set
