@@ -529,6 +529,9 @@
     <button class="costs-btn" id="costsBtn" onclick="openCosts(false)">
       🧾 KOSZTY
     </button>
+    <button class="costs-btn" id="tipsBtn" onclick="openTips()">
+      💰 NAPIWKI
+    </button>
     <button class="end-shift-big-btn" id="endShiftBtn" onclick="endShift()">
       ■ ZAKOŃCZ ZMIANĘ
     </button>
@@ -1089,6 +1092,26 @@
     <div class="welcome-sub" id="welcomeSub">Witaj z powrotem. Do końca zmiany zostało:</div>
     <div class="welcome-countdown" id="welcomeCountdown">--:--</div>
     <button class="welcome-btn" onclick="closeWelcome()">ZACZYNAMY</button>
+  </div>
+</div>
+
+<!-- TIPS PANEL -->
+<div class="costs-overlay" id="tipsOverlay" onclick="closeTipsOutside(event)">
+  <div class="costs-panel">
+    <div class="costs-header">
+      <div class="costs-title">💰 Napiwki</div>
+      <button class="costs-close-btn" onclick="closeTips()">✕</button>
+    </div>
+    <div class="costs-body">
+      <div class="costs-extra-header">
+        <span class="costs-label">Napiwki</span>
+        <button class="costs-add-btn" onclick="addTipItem()">+ Dodaj</button>
+      </div>
+      <div id="tipsExtraList"></div>
+    </div>
+    <div class="costs-footer">
+      <button class="costs-save-btn" onclick="saveTips()">ZAPISZ</button>
+    </div>
   </div>
 </div>
 
@@ -1789,10 +1812,9 @@ function renderStops(restauracja) {
       <div class="stop-num">${s.delivered?CHECK_SVG:num}</div>
       <div class="stop-info" id="info-${s.id}">
         <div class="stop-address">${s.address}</div>
-        ${s.note?`<div class="stop-note">📝 ${s.note}</div>`:''}
-        <div class="stop-meta">
+        <div class="stop-note-row" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          ${s.note?`<div class="stop-note">📝 ${s.note}</div>`:''}
           ${amountHtml}
-          <span class="stop-time">${s.time}</span>
         </div>
         ${payIconsHtml}
       </div>
@@ -1955,6 +1977,8 @@ window.saveStopEdit = async () => {
     closeStopEdit();
     showToast('Zapisano ✓');
     renderStops(_seRest);
+    _histCache = null;
+    renderHistoria();
   } catch(e) { showToast('Błąd: '+e.message); }
 };
 
@@ -1980,7 +2004,10 @@ window.planRoute = (restauracja) => {
     const originEnc = encodeURIComponent(originStr);
     const destEnc = encodeURIComponent(PIZZERIA); // always return to Epicka
     if (active.length === 1) {
-      return `https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${destEnc}&waypoints=${encodeURIComponent(active[0].address)}&travelmode=driving`;
+      const url = `https://maps.google.com/maps?saddr=${originEnc}&daddr=${encodeURIComponent(active[0].address)}`;
+      if (mapsWin) mapsWin.location.href = url;
+      else window.open(url, '_blank');
+      return null;
     }
     // Use Directions API to optimize waypoints
     const ds = new google.maps.DirectionsService();
@@ -1996,10 +2023,10 @@ window.planRoute = (restauracja) => {
         const order = result.routes[0].waypoint_order;
         const sorted = order.map(i => active[i]);
         const waypts = sorted.map(s => encodeURIComponent(s.address)).join('%7C');
-        url = `https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${destEnc}&waypoints=${waypts}&travelmode=driving`;
+        url = `https://maps.google.com/maps?saddr=${originEnc}&daddr=${waypts.split('%7C').join('+to:')}&daddr=${destEnc}`;
       } else {
         const waypts = active.map(s => encodeURIComponent(s.address)).join('%7C');
-        url = `https://www.google.com/maps/dir/?api=1&origin=${originEnc}&destination=${destEnc}&waypoints=${waypts}&travelmode=driving`;
+        url = `https://maps.google.com/maps?saddr=${originEnc}&daddr=${waypts.split('%7C').join('+to:')}&daddr=${destEnc}`;
       }
       if (mapsWin) mapsWin.location.href = url;
       else window.open(url, '_blank');
@@ -2229,14 +2256,19 @@ async function renderHistoria() {
   const uniqueDays = [...new Set(items.map(o => o._date?.toISOString?.().slice(0,10) || ''))].filter(Boolean);
   // Load shifts and costs for all days
   const _costsCache = {};
+  const _tipsCache = {};
   await Promise.all(uniqueDays.map(async day => {
     const shift = await getShiftForDate(day);
     if (shift && !shift.disabled && shift.hours) { stats.shiftHours += shift.hours; stats.shiftEarn += shift.hours * rate; }
-    // Load costs for this day
     try {
       const q = query(collection(db,'costs'), where('uid','==',currentUser.uid), where('date','==',day));
       const snap = await getDocs(q);
       if (!snap.empty) _costsCache[day] = snap.docs[0].data();
+    } catch(e) {}
+    try {
+      const qt = query(collection(db,'tips'), where('uid','==',currentUser.uid), where('date','==',day));
+      const snpt = await getDocs(qt);
+      if (!snpt.empty) _tipsCache[day] = snpt.docs[0].data();
     } catch(e) {}
   }));
 
@@ -2330,6 +2362,17 @@ async function renderHistoria() {
       : '';
 
     const dayCosts = dayKey ? (_costsCache[dayKey] || null) : null;
+    const dayTips = dayKey ? (_tipsCache[dayKey] || null) : null;
+    const tipsTotal = dayTips ? (dayTips.tips||[]).reduce((a,t)=>a+(t.amount||0),0) : 0;
+    const hasTips = tipsTotal > 0;
+    const tipsHtml = hasTips ? (() => {
+      let rows = '';
+      (dayTips.tips||[]).forEach(t => {
+        if (t.name||t.amount) rows += '<div style="display:flex;justify-content:space-between;padding:4px 0"><span>💰 ' + (t.name||'Napiwek') + '</span><span style="font-weight:700">' + (t.amount||0) + ' zł</span></div>';
+      });
+      rows += '<div style="display:flex;justify-content:space-between;padding:6px 0 0;margin-top:4px;border-top:1px solid var(--border);font-weight:900"><span>Łącznie napiwki</span><span style="color:#2a7a4a">' + tipsTotal + ' zł</span></div>';
+      return '<div style="margin-top:8px;padding:12px 14px;background:rgba(42,122,74,0.04);border-radius:8px;border:1px solid rgba(42,122,74,0.12)"><div style="font-family:Barlow Condensed,sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">NAPIWKI</div>' + rows + '</div>';
+    })() : '';
     const costsTotal = dayCosts ? ((dayCosts.parking||0) + (dayCosts.extra||[]).reduce((a,e)=>a+(e.amount||0),0)) : 0;
     const hasCosts = costsTotal > 0;
     const costsHtml = hasCosts ? (() => {
@@ -2367,6 +2410,7 @@ async function renderHistoria() {
       <div class="history-day-body">
         ${stops}
         ${costsHtml}
+        ${tipsHtml}
       </div>
     </div>`;
   }).join('');
@@ -2976,6 +3020,83 @@ const savedDark = localStorage.getItem('epDarkMode');
 if (savedDark === '1') applyDarkMode(true);
 
 
+
+// ─── TIPS ───
+let _tipsData = { tips: [] };
+
+async function loadTipsForToday() {
+  if (!currentUser) return;
+  try {
+    const q = query(collection(db,'tips'), where('uid','==',currentUser.uid), where('date','==',todayDateStr()));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const d = snap.docs[0].data();
+      _tipsData = { tips: d.tips||[], docId: snap.docs[0].id };
+    } else {
+      _tipsData = { tips: [] };
+    }
+  } catch(e) {}
+}
+
+async function saveTipsToFirestore(data) {
+  if (!currentUser) return;
+  try {
+    const payload = { uid: currentUser.uid, date: todayDateStr(), tips: data.tips||[] };
+    if (data.docId) {
+      await updateDoc(doc(db,'tips',data.docId), payload);
+    } else {
+      const ref = await addDoc(collection(db,'tips'), payload);
+      _tipsData.docId = ref.id;
+    }
+    _tipsData = { ...payload, docId: _tipsData.docId };
+  } catch(e) { showToast('Błąd zapisu napiwków'); }
+}
+
+window.openTips = async () => {
+  await loadTipsForToday();
+  const list = document.getElementById('tipsExtraList');
+  list.innerHTML = '';
+  (_tipsData.tips||[]).forEach(item => addTipItemToList(item.name, item.amount));
+  document.getElementById('tipsOverlay').classList.add('show');
+};
+window.closeTips = () => document.getElementById('tipsOverlay').classList.remove('show');
+window.closeTipsOutside = (e) => { if (e.target === document.getElementById('tipsOverlay')) closeTips(); };
+
+function addTipItemToList(name, amount) {
+  name = name || ''; amount = amount || '';
+  const list = document.getElementById('tipsExtraList');
+  const row = document.createElement('div');
+  row.className = 'cost-item-row';
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text'; nameInput.className = 'costs-input-name';
+  nameInput.placeholder = 'Opis napiwku'; nameInput.value = name;
+  const amtWrap = document.createElement('div'); amtWrap.className = 'costs-amount-wrap';
+  const amtInput = document.createElement('input');
+  amtInput.type = 'number'; amtInput.className = 'costs-input-amount';
+  amtInput.placeholder = '0'; amtInput.min = '0'; amtInput.step = '1'; amtInput.value = amount;
+  const currency = document.createElement('span'); currency.className = 'costs-currency'; currency.textContent = 'zł';
+  amtWrap.appendChild(amtInput); amtWrap.appendChild(currency);
+  const removeBtn = document.createElement('button'); removeBtn.className = 'cost-item-remove';
+  removeBtn.textContent = '×'; removeBtn.onclick = () => row.remove();
+  row.appendChild(nameInput); row.appendChild(amtWrap); row.appendChild(removeBtn);
+  list.appendChild(row); nameInput.focus();
+}
+
+window.addTipItem = () => addTipItemToList();
+
+window.saveTips = async () => {
+  const data = { tips: [], docId: _tipsData.docId };
+  document.querySelectorAll('#tipsExtraList .cost-item-row').forEach(row => {
+    const name = row.querySelector('.costs-input-name')?.value?.trim();
+    const amt = parseFloat(row.querySelector('.costs-input-amount')?.value)||0;
+    if (name || amt > 0) data.tips.push({ name: name||'', amount: amt });
+  });
+  await saveTipsToFirestore(data);
+  closeTips();
+  _histCache = null;
+  renderHistoria();
+  showToast('Napiwki zapisane ✓');
+};
 
 // ─── COSTS ───
 let _costsData = { parking: 0, extra: [] }; // in-memory, saved to Firestore
