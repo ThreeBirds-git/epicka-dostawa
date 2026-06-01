@@ -2069,17 +2069,29 @@ window.removeStop = async (id, restauracja) => {
 window.planRoute = (restauracja) => {
   const active = stops[restauracja].filter(s => !s.delivered);
   if (!active.length) { showToast('Brak aktywnych przystanków!'); return; }
-  // Build URL: stops in current order, end at Epicka
-  const allAddrs = [...active.map(s => s.address), PIZZERIA];
-  const origin = encodeURIComponent(allAddrs[0]);
-  const destination = encodeURIComponent(allAddrs[allAddrs.length - 1]);
-  const waypoints = allAddrs.slice(1, -1).map(a => encodeURIComponent(a)).join('|');
-  const url = 'https://www.google.com/maps/dir/?api=1' +
-    '&origin=' + origin +
-    '&destination=' + destination +
-    (waypoints ? '&waypoints=' + waypoints : '') +
-    '&travelmode=driving';
-  window.open(url, '_blank');
+
+  const buildAndOpen = (originStr) => {
+    const addrs = active.map(s => s.address);
+    const origin = encodeURIComponent(originStr);
+    const destination = encodeURIComponent(addrs[addrs.length - 1]);
+    const waypoints = addrs.slice(0, -1).map(a => encodeURIComponent(a)).join('|');
+    const url = 'https://www.google.com/maps/dir/?api=1' +
+      '&origin=' + origin +
+      '&destination=' + destination +
+      (waypoints ? '&waypoints=' + waypoints : '') +
+      '&travelmode=driving';
+    window.open(url, '_blank');
+  };
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => buildAndOpen(pos.coords.latitude + ',' + pos.coords.longitude),
+      () => buildAndOpen(restauracja === 'tajska' ? TAJSKA : PIZZERIA),
+      { timeout: 5000, maximumAge: 30000 }
+    );
+  } else {
+    buildAndOpen(restauracja === 'tajska' ? TAJSKA : PIZZERIA);
+  }
 };
 function openMaps(webUrl) {
   // Try to open native Maps app via comgooglemaps:// (iOS) or intent (Android)
