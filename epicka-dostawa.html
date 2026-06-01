@@ -2091,16 +2091,14 @@ window.planRoute = (restauracja) => {
       '&daddr=' + allAddrs.map(a => encodeURIComponent(a)).join('/') +
       '&directionsmode=driving';
 
-    if (isPWA) {
-      window.location.href = nativeUrl;
-    } else {
-      const appWin = window.open(nativeUrl, '_blank');
-      setTimeout(() => {
-        try {
-          if (!appWin || appWin.closed) window.open(webUrl, '_blank');
-        } catch(e) { window.open(webUrl, '_blank'); }
-      }, 500);
-    }
+    // Both PWA and browser: open webUrl which works reliably
+    // comgooglemaps:// as primary, webUrl as fallback
+    const appWin = window.open(nativeUrl, '_blank');
+    setTimeout(() => {
+      try {
+        if (!appWin || appWin.closed) window.open(webUrl, '_blank');
+      } catch(e) { window.open(webUrl, '_blank'); }
+    }, 500);
   };
 
   const fallback = restauracja === 'tajska' ? TAJSKA : PIZZERIA;
