@@ -2070,35 +2070,28 @@ window.planRoute = (restauracja) => {
   const active = stops[restauracja].filter(s => !s.delivered);
   if (!active.length) { showToast('Brak aktywnych przystanków!'); return; }
 
-  const buildUrl = (originStr) => {
+  const openMaps = (originStr) => {
     const addrs = active.map(s => s.address);
-    const origin = encodeURIComponent(originStr);
     const destination = encodeURIComponent(addrs[addrs.length - 1]);
     const waypoints = addrs.slice(0, -1).map(a => encodeURIComponent(a)).join('|');
-    return 'https://www.google.com/maps/dir/?api=1' +
-      '&origin=' + origin +
+    const url = 'https://www.google.com/maps/dir/?api=1' +
+      '&origin=' + encodeURIComponent(originStr) +
       '&destination=' + destination +
       (waypoints ? '&waypoints=' + waypoints : '') +
       '&travelmode=driving';
+    window.location.href = url;
   };
 
   const fallback = restauracja === 'tajska' ? TAJSKA : PIZZERIA;
 
-  // Open window immediately (synchronous, before any async) to avoid Safari popup blocker
-  const mapsWin = window.open('', '_blank');
-
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        mapsWin.location.href = buildUrl(pos.coords.latitude + ',' + pos.coords.longitude);
-      },
-      () => {
-        mapsWin.location.href = buildUrl(fallback);
-      },
+      (pos) => openMaps(pos.coords.latitude + ',' + pos.coords.longitude),
+      () => openMaps(fallback),
       { timeout: 5000, maximumAge: 30000 }
     );
   } else {
-    mapsWin.location.href = buildUrl(fallback);
+    openMaps(fallback);
   }
 };
 function openMaps(webUrl) {
