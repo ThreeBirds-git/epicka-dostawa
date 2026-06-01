@@ -2070,6 +2070,8 @@ window.planRoute = (restauracja) => {
   const active = stops[restauracja].filter(s => !s.delivered);
   if (!active.length) { showToast('Brak aktywnych przystanków!'); return; }
 
+  const isPWA = window.navigator.standalone === true;
+
   const openMaps = (originStr) => {
     const addrs = active.map(s => s.address);
     const dest = addrs[addrs.length - 1];
@@ -2082,15 +2084,20 @@ window.planRoute = (restauracja) => {
       (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
-    // Try native Google Maps app via universal link
     const nativeUrl = webUrl.replace('https://www.google.com/maps', 'comgooglemaps://');
-    const appWin = window.open(nativeUrl, '_blank');
-    // Fallback to web after 500ms if app not installed
-    setTimeout(() => {
-      try {
-        if (!appWin || appWin.closed) window.open(webUrl, '_blank');
-      } catch(e) { window.open(webUrl, '_blank'); }
-    }, 500);
+
+    if (isPWA) {
+      // W PWA window.open jest blokowane — użyj location.href
+      window.location.href = nativeUrl;
+    } else {
+      // W przeglądarce — otwórz w nowej karcie, fallback po 500ms
+      const appWin = window.open(nativeUrl, '_blank');
+      setTimeout(() => {
+        try {
+          if (!appWin || appWin.closed) window.open(webUrl, '_blank');
+        } catch(e) { window.open(webUrl, '_blank'); }
+      }, 500);
+    }
   };
 
   const fallback = restauracja === 'tajska' ? TAJSKA : PIZZERIA;
