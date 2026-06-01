@@ -2072,14 +2072,29 @@ window.planRoute = (restauracja) => {
 
   const openMaps = (originStr) => {
     const addrs = active.map(s => s.address);
-    const destination = encodeURIComponent(addrs[addrs.length - 1]);
-    const waypoints = addrs.slice(0, -1).map(a => encodeURIComponent(a)).join('|');
-    const url = 'https://www.google.com/maps/dir/?api=1' +
+    const dest = addrs[addrs.length - 1];
+    const waypoints = addrs.slice(0, -1);
+
+    // comgooglemaps:// otwiera appkę Google Maps bezpośrednio na iOS
+    // waypoints w formacie +to: dla Google Maps app
+    const allStops = [...waypoints, dest];
+    const daddr = allStops.map(a => encodeURIComponent(a)).join('+to:');
+    const appUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
+      '&daddr=' + daddr + '&directionsmode=driving';
+
+    // Fallback webowy jeśli appka nie jest zainstalowana
+    const wayEnc = waypoints.map(a => encodeURIComponent(a)).join('|');
+    const webUrl = 'https://www.google.com/maps/dir/?api=1' +
       '&origin=' + encodeURIComponent(originStr) +
-      '&destination=' + destination +
-      (waypoints ? '&waypoints=' + waypoints : '') +
+      '&destination=' + encodeURIComponent(dest) +
+      (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
-    window.location.href = url;
+
+    // Próbuj appkę, po 1.5s jeśli nie otworzyła — idź na stronę
+    const t = setTimeout(() => { window.location.href = webUrl; }, 1500);
+    window.location.href = appUrl;
+    // Anuluj fallback jeśli strona straciła focus (appka się otworzyła)
+    window.addEventListener('blur', () => clearTimeout(t), { once: true });
   };
 
   const fallback = restauracja === 'tajska' ? TAJSKA : PIZZERIA;
