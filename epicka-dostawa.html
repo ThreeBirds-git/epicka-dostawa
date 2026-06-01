@@ -2084,13 +2084,16 @@ window.planRoute = (restauracja) => {
       (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
-    const nativeUrl = webUrl.replace('https://www.google.com/maps', 'comgooglemaps://');
+    // comgooglemaps:// format dla natywnej appki
+    // daddr z wieloma adresami używa '/' jako separatora
+    const allAddrs = waypoints.concat([dest]);
+    const nativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
+      '&daddr=' + allAddrs.map(a => encodeURIComponent(a)).join('/') +
+      '&directionsmode=driving';
 
     if (isPWA) {
-      // W PWA window.open jest blokowane — użyj location.href
       window.location.href = nativeUrl;
     } else {
-      // W przeglądarce — otwórz w nowej karcie, fallback po 500ms
       const appWin = window.open(nativeUrl, '_blank');
       setTimeout(() => {
         try {
