@@ -2084,16 +2084,21 @@ window.planRoute = (restauracja) => {
       (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
+    // Build comgooglemaps:// URL - works on both PWA and browser
+    const allAddrs = waypoints.concat([dest]);
+    // Use address strings directly (not encoded) for daddr - Maps app handles encoding
+    const daddrStr = allAddrs.join('/');
+    const nativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
+      '&daddr=' + encodeURIComponent(daddrStr) +
+      '&directionsmode=driving';
+
     if (isPWA) {
-      // W PWA window.open jest blokowane - użyj location.href z webUrl
-      // iOS Safari zapyta czy otworzyć w Google Maps app
-      window.location.href = webUrl;
+      // PWA: window.open blocked, use location.href with native scheme
+      window.location.href = nativeUrl;
+      // Fallback to web if app not installed (after 2s)
+      setTimeout(() => { window.location.href = webUrl; }, 2000);
     } else {
-      // W przeglądarce - próbuj native scheme, fallback do web
-      const allAddrs = waypoints.concat([dest]);
-      const nativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
-        '&daddr=' + allAddrs.map(a => encodeURIComponent(a)).join('/') +
-        '&directionsmode=driving';
+      // Browser: open native in new tab, fallback to web
       const appWin = window.open(nativeUrl, '_blank');
       setTimeout(() => {
         try {
