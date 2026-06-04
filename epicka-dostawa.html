@@ -1901,6 +1901,8 @@ function renderStops(restauracja) {
         }, { passive: true });
       }
       el.addEventListener('touchmove', e => {
+        if (dragSrcIdx === null) return; // not dragging, allow scroll
+        e.preventDefault(); // block scroll during drag
         const touch = e.touches[0];
         const els = document.elementsFromPoint(touch.clientX, touch.clientY);
         const overEl = els.find(x => x.classList.contains('stop-item') && x !== el);
@@ -1909,7 +1911,7 @@ function renderStops(restauracja) {
           overEl.classList.add('drag-over');
           _touchDragOver = parseInt(overEl.dataset.idx);
         }
-      }, { passive: true });
+      }, { passive: false });
     }
 
     list.appendChild(el);
@@ -2092,18 +2094,29 @@ window.planRoute = (restauracja) => {
     const waypoints = addrs.slice(0, -1);
     const wayEnc = waypoints.map(a => encodeURIComponent(a)).join('|');
 
-    // google.com/maps/dir works reliably for multi-stop on all platforms
-    const url = 'https://www.google.com/maps/dir/?api=1' +
+    const nativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
+      addrs.map(a => '&daddr=' + encodeURIComponent(a)).join('') +
+      '&directionsmode=driving';
+
+    const webUrl = 'https://www.google.com/maps/dir/?api=1' +
       '&origin=' + encodeURIComponent(originStr) +
       '&destination=' + encodeURIComponent(dest) +
       (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
     if (isPWA) {
-      // PWA: location.href — iOS will offer to open in Maps app
-      window.location.href = url;
+      const a = document.createElement('a');
+      a.href = nativeUrl;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 100);
     } else {
-      window.open(url, '_blank');
+      const appWin = window.open(nativeUrl, '_blank');
+      setTimeout(() => {
+        try { if (!appWin || appWin.closed) window.open(webUrl, '_blank'); }
+        catch(e) { window.open(webUrl, '_blank'); }
+      }, 500);
     }
   };
 
