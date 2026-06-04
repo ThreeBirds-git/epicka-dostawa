@@ -2087,6 +2087,7 @@ window.planRoute = (restauracja) => {
   if (!active.length) { showToast('Brak aktywnych przystanków!'); return; }
 
   const isPWA = window.navigator.standalone === true;
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const openMaps = (originStr) => {
     const addrs = active.map(s => s.address);
@@ -2094,29 +2095,28 @@ window.planRoute = (restauracja) => {
     const waypoints = addrs.slice(0, -1);
     const wayEnc = waypoints.map(a => encodeURIComponent(a)).join('|');
 
-    const nativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
-      addrs.map(a => '&daddr=' + encodeURIComponent(a)).join('') +
-      '&directionsmode=driving';
-
     const webUrl = 'https://www.google.com/maps/dir/?api=1' +
       '&origin=' + encodeURIComponent(originStr) +
       '&destination=' + encodeURIComponent(dest) +
       (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
+    const nativeUrl = webUrl.replace('https://www.google.com/maps', 'comgooglemaps://');
+
     if (isPWA) {
+      // PWA: hidden <a> click — opens Maps app directly, doesn't navigate PWA away
       const a = document.createElement('a');
       a.href = nativeUrl;
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       setTimeout(() => document.body.removeChild(a), 100);
+    } else if (isIOS) {
+      // iOS browser: try native, fallback to web after 500ms
+      window.location.href = nativeUrl;
+      setTimeout(() => { window.open(webUrl, '_blank'); }, 500);
     } else {
-      const appWin = window.open(nativeUrl, '_blank');
-      setTimeout(() => {
-        try { if (!appWin || appWin.closed) window.open(webUrl, '_blank'); }
-        catch(e) { window.open(webUrl, '_blank'); }
-      }, 500);
+      window.open(webUrl, '_blank');
     }
   };
 
