@@ -2085,10 +2085,10 @@ window.planRoute = (restauracja) => {
       (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
-    // comgooglemaps:// URL: każdy przystanek jako osobny &daddr=
-    // Format: saddr=origin&daddr=stop1&daddr=stop2&daddr=stop3
+    // comgooglemaps:// otwiera appkę bezpośrednio
     const nativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
       addrs.map(a => '&daddr=' + encodeURIComponent(a)).join('') +
+      '&daddr=' + encodeURIComponent(restauracja === 'tajska' ? TAJSKA : PIZZERIA) +
       '&directionsmode=driving';
 
     if (isPWA) {
