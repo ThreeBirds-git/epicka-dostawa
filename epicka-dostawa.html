@@ -2074,31 +2074,31 @@ window.planRoute = (restauracja) => {
 
   const openMaps = (originStr) => {
     const addrs = active.map(s => s.address);
+
+    // Web URL: origin + waypoints + destination
     const dest = addrs[addrs.length - 1];
     const waypoints = addrs.slice(0, -1);
     const wayEnc = waypoints.map(a => encodeURIComponent(a)).join('|');
-
     const webUrl = 'https://www.google.com/maps/dir/?api=1' +
       '&origin=' + encodeURIComponent(originStr) +
       '&destination=' + encodeURIComponent(dest) +
       (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
-    // Build comgooglemaps:// URL - works on both PWA and browser
-    const allAddrs = waypoints.concat([dest]);
-    // Use address strings directly (not encoded) for daddr - Maps app handles encoding
-    const daddrStr = allAddrs.join('/');
+    // comgooglemaps:// URL: każdy przystanek jako osobny &daddr=
+    // Format: saddr=origin&daddr=stop1&daddr=stop2&daddr=stop3
     const nativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
-      '&daddr=' + encodeURIComponent(daddrStr) +
+      addrs.map(a => '&daddr=' + encodeURIComponent(a)).join('') +
       '&directionsmode=driving';
 
     if (isPWA) {
-      // PWA: window.open blocked, use location.href with native scheme
-      window.location.href = nativeUrl;
-      // Fallback to web if app not installed (after 2s)
-      setTimeout(() => { window.location.href = webUrl; }, 2000);
+      const a = document.createElement('a');
+      a.href = nativeUrl;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => document.body.removeChild(a), 100);
     } else {
-      // Browser: open native in new tab, fallback to web
       const appWin = window.open(nativeUrl, '_blank');
       setTimeout(() => {
         try {
