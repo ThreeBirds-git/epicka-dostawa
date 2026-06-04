@@ -1890,13 +1890,14 @@ function renderStops(restauracja) {
         }, { passive: true });
         handle.addEventListener('touchend', e => {
           e.stopPropagation();
-          el.classList.remove('dragging');
-          if (_touchDragOver !== null && _touchDragOver !== dragSrcIdx) {
-            const moved = stops[restauracja].splice(dragSrcIdx, 1)[0];
-            stops[restauracja].splice(_touchDragOver, 0, moved);
+          document.querySelectorAll('.stop-item').forEach(x => x.classList.remove('drag-over', 'dragging'));
+          if (_touchDragOver !== null && dragSrcIdx !== null && _touchDragOver !== dragSrcIdx) {
+            const arr = stops[restauracja];
+            const moved = arr.splice(dragSrcIdx, 1)[0];
+            arr.splice(_touchDragOver, 0, moved);
             renderStops(restauracja);
           }
-          dragSrcIdx = null; _touchDragOver = null;
+          dragSrcIdx = null; _touchDragOver = null; _touchDragRest = null;
         }, { passive: true });
       }
       el.addEventListener('touchmove', e => {
@@ -1963,7 +1964,19 @@ let _seId = null, _seRest = null, _seWolt = false;
 window.editStop = (id, restauracja) => {
   const s = stops[restauracja].find(s => s.id === id); if (!s) return;
   _seId = id; _seRest = restauracja; _seWolt = s.wolt || false;
-  document.getElementById('seAddr').value = s.address || '';
+  // Init autocomplete on address field if not done yet
+  const seAddrEl = document.getElementById('seAddr');
+  if (seAddrEl && !seAddrEl._acInit && window.google?.maps?.places) {
+    seAddrEl._acInit = true;
+    const seAc = new google.maps.places.Autocomplete(seAddrEl, {
+      componentRestrictions: { country: 'pl' }, fields: ['formatted_address']
+    });
+    seAc.addListener('place_changed', () => {
+      const place = seAc.getPlace();
+      if (place.formatted_address) seAddrEl.value = place.formatted_address;
+    });
+  }
+  seAddrEl.value = s.address || '';
   document.getElementById('seNote').value = s.note || '';
   document.getElementById('seKwota').value = s.kwota || '';
   document.getElementById('seKwota').disabled = s.oplacone || false;
@@ -2067,6 +2080,7 @@ window.removeStop = async (id, restauracja) => {
 
 // ─── PLAN ROUTE ───
 window.planRoute = (restauracja) => {
+  if (!stops[restauracja]) { showToast('Brak aktywnych przystanków!'); return; }
   const active = stops[restauracja].filter(s => !s.delivered);
   if (!active.length) { showToast('Brak aktywnych przystanków!'); return; }
 
@@ -2078,34 +2092,18 @@ window.planRoute = (restauracja) => {
     const waypoints = addrs.slice(0, -1);
     const wayEnc = waypoints.map(a => encodeURIComponent(a)).join('|');
 
-    const webUrl = 'https://www.google.com/maps/dir/?api=1' +
+    // google.com/maps/dir works reliably for multi-stop on all platforms
+    const url = 'https://www.google.com/maps/dir/?api=1' +
       '&origin=' + encodeURIComponent(originStr) +
       '&destination=' + encodeURIComponent(dest) +
       (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
-    // comgooglemaps:// - każdy przystanek jako osobny &daddr
-    const allAddrs = waypoints.concat([dest]);
-    const nativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
-      allAddrs.map(a => '&daddr=' + encodeURIComponent(a)).join('') +
-      '&directionsmode=driving';
-
     if (isPWA) {
-      // PWA: use hidden <a> click to avoid navigation away from PWA
-      const a = document.createElement('a');
-      a.href = nativeUrl;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => document.body.removeChild(a), 100);
+      // PWA: location.href — iOS will offer to open in Maps app
+      window.location.href = url;
     } else {
-      // Browser: open native in new tab, fallback to web
-      const appWin = window.open(nativeUrl, '_blank');
-      setTimeout(() => {
-        try {
-          if (!appWin || appWin.closed) window.open(webUrl, '_blank');
-        } catch(e) { window.open(webUrl, '_blank'); }
-      }, 500);
+      window.open(url, '_blank');
     }
   };
 
