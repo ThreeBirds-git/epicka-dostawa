@@ -2074,23 +2074,26 @@ window.planRoute = (restauracja) => {
 
   const openMaps = (originStr) => {
     const addrs = active.map(s => s.address);
+    const dest = addrs[addrs.length - 1];
+    const waypoints = addrs.slice(0, -1);
+    const wayEnc = waypoints.map(a => encodeURIComponent(a)).join('|');
 
-    // Web URL: origin → wszystkie przystanki → Epicka
-    const finalDest = restauracja === 'tajska' ? TAJSKA : PIZZERIA;
-    const wayEnc = addrs.map(a => encodeURIComponent(a)).join('|');
     const webUrl = 'https://www.google.com/maps/dir/?api=1' +
       '&origin=' + encodeURIComponent(originStr) +
-      '&destination=' + encodeURIComponent(finalDest) +
-      '&waypoints=' + wayEnc +
+      '&destination=' + encodeURIComponent(dest) +
+      (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
-    // comgooglemaps:// otwiera appkę bezpośrednio
+    // Build comgooglemaps:// URL - works on both PWA and browser
+    const allAddrs = waypoints.concat([dest]);
+    // Use address strings directly (not encoded) for daddr - Maps app handles encoding
+    const daddrStr = allAddrs.join('/');
     const nativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
-      addrs.map(a => '&daddr=' + encodeURIComponent(a)).join('') +
-      '&daddr=' + encodeURIComponent(restauracja === 'tajska' ? TAJSKA : PIZZERIA) +
+      '&daddr=' + encodeURIComponent(daddrStr) +
       '&directionsmode=driving';
 
     if (isPWA) {
+      // PWA: use hidden <a> click to avoid navigation away from PWA
       const a = document.createElement('a');
       a.href = nativeUrl;
       a.style.display = 'none';
@@ -2098,6 +2101,7 @@ window.planRoute = (restauracja) => {
       a.click();
       setTimeout(() => document.body.removeChild(a), 100);
     } else {
+      // Browser: open native in new tab, fallback to web
       const appWin = window.open(nativeUrl, '_blank');
       setTimeout(() => {
         try {
