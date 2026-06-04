@@ -2084,12 +2084,10 @@ window.planRoute = (restauracja) => {
       (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
-    // Build comgooglemaps:// URL - works on both PWA and browser
+    // comgooglemaps:// - każdy przystanek jako osobny &daddr
     const allAddrs = waypoints.concat([dest]);
-    // Use address strings directly (not encoded) for daddr - Maps app handles encoding
-    const daddrStr = allAddrs.join('/');
     const nativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
-      '&daddr=' + encodeURIComponent(daddrStr) +
+      allAddrs.map(a => '&daddr=' + encodeURIComponent(a)).join('') +
       '&directionsmode=driving';
 
     if (isPWA) {
