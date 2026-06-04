@@ -2075,14 +2075,13 @@ window.planRoute = (restauracja) => {
   const openMaps = (originStr) => {
     const addrs = active.map(s => s.address);
 
-    // Web URL: origin + waypoints + destination
-    const dest = addrs[addrs.length - 1];
-    const waypoints = addrs.slice(0, -1);
-    const wayEnc = waypoints.map(a => encodeURIComponent(a)).join('|');
+    // Web URL: origin → wszystkie przystanki → Epicka
+    const finalDest = restauracja === 'tajska' ? TAJSKA : PIZZERIA;
+    const wayEnc = addrs.map(a => encodeURIComponent(a)).join('|');
     const webUrl = 'https://www.google.com/maps/dir/?api=1' +
       '&origin=' + encodeURIComponent(originStr) +
-      '&destination=' + encodeURIComponent(dest) +
-      (wayEnc ? '&waypoints=' + wayEnc : '') +
+      '&destination=' + encodeURIComponent(finalDest) +
+      '&waypoints=' + wayEnc +
       '&travelmode=driving';
 
     // comgooglemaps:// otwiera appkę bezpośrednio
