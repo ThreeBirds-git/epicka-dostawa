@@ -2104,9 +2104,14 @@ window.planRoute = (restauracja) => {
     const nativeUrl = webUrl.replace('https://www.google.com/maps', 'comgooglemaps://');
 
     if (isPWA) {
-      // PWA: hidden <a> click — opens Maps app directly, doesn't navigate PWA away
+      // PWA: build comgooglemaps:// URL directly with saddr/daddr format
+      const allAddrs = [dest].concat(waypoints.slice().reverse()).reverse();
+      // saddr = origin, daddr = all stops joined with /
+      const pwaNativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
+        '&daddr=' + addrs.map(a => encodeURIComponent(a)).join('/') +
+        '&directionsmode=driving';
       const a = document.createElement('a');
-      a.href = nativeUrl;
+      a.href = pwaNativeUrl;
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
