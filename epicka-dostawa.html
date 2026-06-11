@@ -2101,25 +2101,18 @@ window.planRoute = (restauracja) => {
       (wayEnc ? '&waypoints=' + wayEnc : '') +
       '&travelmode=driving';
 
-    const nativeUrl = webUrl.replace('https://www.google.com/maps', 'comgooglemaps://');
-
+    // Universal web URL works reliably for multi-stop on all platforms.
+    // On iOS, Google Maps app intercepts google.com/maps universal links automatically.
+    // comgooglemaps:// saddr/daddr only supports single destination reliably.
     if (isPWA) {
-      // PWA: build comgooglemaps:// URL directly with saddr/daddr format
-      const allAddrs = [dest].concat(waypoints.slice().reverse()).reverse();
-      // saddr = origin, daddr = all stops joined with /
-      const pwaNativeUrl = 'comgooglemaps://?saddr=' + encodeURIComponent(originStr) +
-        '&daddr=' + addrs.map(a => encodeURIComponent(a)).join('/') +
-        '&directionsmode=driving';
       const a = document.createElement('a');
-      a.href = pwaNativeUrl;
+      a.href = webUrl;
+      a.target = '_blank';
+      a.rel = 'noopener';
       a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       setTimeout(() => document.body.removeChild(a), 100);
-    } else if (isIOS) {
-      // iOS browser: try native, fallback to web after 500ms
-      window.location.href = nativeUrl;
-      setTimeout(() => { window.open(webUrl, '_blank'); }, 500);
     } else {
       window.open(webUrl, '_blank');
     }
@@ -2360,11 +2353,6 @@ async function renderHistoria() {
       ${stats.shiftEarn>0?`<div class="hist-summary-row"><span class="hs-label">💰 Wypłata</span><span class="hs-val" style="font-size:20px;font-weight:900;color:var(--green)">${stats.shiftEarn.toFixed(0)} zł</span></div>`:''}
     </div>`;
 
-  if (items.length === 0) {
-    daysEl.innerHTML = '<div class="no-history">Brak dostaw w tym okresie</div>';
-    return;
-  }
-
   // Group by day
   const grouped = {};
   items.forEach(i => {
@@ -2390,6 +2378,11 @@ async function renderHistoria() {
         }
       }
     }
+  }
+
+  if (items.length === 0 && !grouped[todayDate.toLocaleDateString('pl-PL', {weekday:'long', day:'numeric', month:'long', year:'numeric'})]) {
+    daysEl.innerHTML = '<div class="no-history">Brak dostaw w tym okresie</div>';
+    return;
   }
 
   // Sort days newest first
